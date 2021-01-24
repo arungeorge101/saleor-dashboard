@@ -19,7 +19,6 @@ import { OrderLineDelete } from "../../types/OrderLineDelete";
 import { OrderLinesAdd } from "../../types/OrderLinesAdd";
 import { OrderLineUpdate } from "../../types/OrderLineUpdate";
 import { OrderMarkAsPaid } from "../../types/OrderMarkAsPaid";
-import { OrderRefund } from "../../types/OrderRefund";
 import { OrderShippingMethodUpdate } from "../../types/OrderShippingMethodUpdate";
 import { OrderUpdate } from "../../types/OrderUpdate";
 import { OrderVoid } from "../../types/OrderVoid";
@@ -42,7 +41,6 @@ interface OrderDetailsMessages {
     handleOrderMarkAsPaid: (data: OrderMarkAsPaid) => void;
     handleOrderVoid: (data: OrderVoid) => void;
     handlePaymentCapture: (data: OrderCapture) => void;
-    handlePaymentRefund: (data: OrderRefund) => void;
     handleShippingMethodUpdate: (data: OrderShippingMethodUpdate) => void;
     handleUpdate: (data: OrderUpdate) => void;
     handleInvoiceGeneratePending: (data: InvoiceRequest) => void;
@@ -75,18 +73,6 @@ export const OrderDetailsMessages: React.FC<OrderDetailsMessages> = ({
         status: "success",
         text: intl.formatMessage({
           defaultMessage: "Payment successfully captured"
-        })
-      });
-      closeModal();
-    }
-  };
-  const handlePaymentRefund = (data: OrderRefund) => {
-    const errs = data.orderRefund?.errors;
-    if (errs.length === 0) {
-      pushMessage({
-        status: "success",
-        text: intl.formatMessage({
-          defaultMessage: "Payment successfully refunded"
         })
       });
       closeModal();
@@ -173,6 +159,7 @@ export const OrderDetailsMessages: React.FC<OrderDetailsMessages> = ({
         })
       });
     }
+    closeModal();
   };
   const handleShippingMethodUpdate = (data: OrderShippingMethodUpdate) => {
     const errs = data.orderUpdateShipping?.errors;
@@ -255,7 +242,6 @@ export const OrderDetailsMessages: React.FC<OrderDetailsMessages> = ({
           defaultMessage: "Draft order successfully finalized"
         })
       });
-      closeModal();
     }
   };
   const handleInvoiceGeneratePending = (data: InvoiceRequest) => {
@@ -313,7 +299,6 @@ export const OrderDetailsMessages: React.FC<OrderDetailsMessages> = ({
     handleOrderMarkAsPaid,
     handleOrderVoid,
     handlePaymentCapture,
-    handlePaymentRefund,
     handleShippingMethodUpdate,
     handleUpdate
   });

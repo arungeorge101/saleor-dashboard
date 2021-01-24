@@ -6,15 +6,9 @@
 // GraphQL fragment: OrderLineFragment
 // ====================================================
 
-export interface OrderLineFragment_variant_product {
-  __typename: "Product";
-  isAvailableForPurchase: boolean | null;
-  isPublished: boolean;
-}
-
 export interface OrderLineFragment_variant {
   __typename: "ProductVariant";
-  product: OrderLineFragment_variant_product;
+  id: string;
   quantityAvailable: number;
 }
 

@@ -48,35 +48,54 @@ export interface OrderVoid_orderVoid_order_billingAddress {
   streetAddress2: string;
 }
 
+export interface OrderVoid_orderVoid_order_events_relatedOrder {
+  __typename: "Order";
+  id: string;
+  number: string | null;
+}
+
 export interface OrderVoid_orderVoid_order_events_user {
   __typename: "User";
   id: string;
   email: string;
+  firstName: string;
+  lastName: string;
+}
+
+export interface OrderVoid_orderVoid_order_events_lines_orderLine {
+  __typename: "OrderLine";
+  id: string;
+  productName: string;
+  variantName: string;
+}
+
+export interface OrderVoid_orderVoid_order_events_lines {
+  __typename: "OrderEventOrderLineObject";
+  quantity: number | null;
+  orderLine: OrderVoid_orderVoid_order_events_lines_orderLine | null;
 }
 
 export interface OrderVoid_orderVoid_order_events {
   __typename: "OrderEvent";
   id: string;
   amount: number | null;
+  shippingCostsIncluded: boolean | null;
   date: any | null;
   email: string | null;
   emailType: OrderEventsEmailsEnum | null;
   invoiceNumber: string | null;
+  relatedOrder: OrderVoid_orderVoid_order_events_relatedOrder | null;
   message: string | null;
   quantity: number | null;
+  transactionReference: string | null;
   type: OrderEventsEnum | null;
   user: OrderVoid_orderVoid_order_events_user | null;
-}
-
-export interface OrderVoid_orderVoid_order_fulfillments_lines_orderLine_variant_product {
-  __typename: "Product";
-  isAvailableForPurchase: boolean | null;
-  isPublished: boolean;
+  lines: (OrderVoid_orderVoid_order_events_lines | null)[] | null;
 }
 
 export interface OrderVoid_orderVoid_order_fulfillments_lines_orderLine_variant {
   __typename: "ProductVariant";
-  product: OrderVoid_orderVoid_order_fulfillments_lines_orderLine_variant_product;
+  id: string;
   quantityAvailable: number;
 }
 
@@ -139,15 +158,9 @@ export interface OrderVoid_orderVoid_order_fulfillments {
   warehouse: OrderVoid_orderVoid_order_fulfillments_warehouse | null;
 }
 
-export interface OrderVoid_orderVoid_order_lines_variant_product {
-  __typename: "Product";
-  isAvailableForPurchase: boolean | null;
-  isPublished: boolean;
-}
-
 export interface OrderVoid_orderVoid_order_lines_variant {
   __typename: "ProductVariant";
-  product: OrderVoid_orderVoid_order_lines_variant_product;
+  id: string;
   quantityAvailable: number;
 }
 
@@ -300,6 +313,14 @@ export interface OrderVoid_orderVoid_order_invoices {
   status: JobStatusEnum;
 }
 
+export interface OrderVoid_orderVoid_order_channel {
+  __typename: "Channel";
+  isActive: boolean;
+  id: string;
+  name: string;
+  currencyCode: string;
+}
+
 export interface OrderVoid_orderVoid_order {
   __typename: "Order";
   id: string;
@@ -329,6 +350,8 @@ export interface OrderVoid_orderVoid_order {
   availableShippingMethods: (OrderVoid_orderVoid_order_availableShippingMethods | null)[] | null;
   discount: OrderVoid_orderVoid_order_discount | null;
   invoices: (OrderVoid_orderVoid_order_invoices | null)[] | null;
+  channel: OrderVoid_orderVoid_order_channel;
+  isPaid: boolean | null;
 }
 
 export interface OrderVoid_orderVoid {

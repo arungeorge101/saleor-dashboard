@@ -306,7 +306,6 @@ export const searchPageProps: SearchPageProps = {
 export const filterPageProps: FilterPageProps<string, object> = {
   ...searchPageProps,
   ...tabPageProps,
-  currencySymbol: "USD",
   filterOpts: {},
   onFilterChange: () => undefined
 };
@@ -344,6 +343,10 @@ export const permissions: ShopInfo_shop_permissions[] = [
   {
     code: PermissionEnum.MANAGE_PRODUCTS,
     name: "Manage products."
+  },
+  {
+    code: PermissionEnum.MANAGE_PRODUCT_TYPES_AND_ATTRIBUTES,
+    name: "Manage product types and attributes."
   },
   {
     code: PermissionEnum.MANAGE_SETTINGS,
@@ -441,13 +444,8 @@ export const adminUserPermissions: User_userPermissions[] = [
   },
   {
     __typename: "UserPermission",
-    code: PermissionEnum.MANAGE_SERVICE_ACCOUNTS,
-    name: "Manage service account"
-  },
-  {
-    __typename: "UserPermission",
-    code: PermissionEnum.MANAGE_SERVICE_ACCOUNTS,
-    name: "Manage service account"
+    code: PermissionEnum.MANAGE_PRODUCT_TYPES_AND_ATTRIBUTES,
+    name: "Manage product types and attributes."
   },
   {
     __typename: "UserPermission",

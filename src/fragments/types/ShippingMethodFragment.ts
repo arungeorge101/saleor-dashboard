@@ -8,10 +8,23 @@ import { WeightUnitsEnum, ShippingMethodTypeEnum } from "./../../types/globalTyp
 // GraphQL fragment: ShippingMethodFragment
 // ====================================================
 
-export interface ShippingMethodFragment_minimumOrderPrice {
-  __typename: "Money";
-  amount: number;
-  currency: string;
+export interface ShippingMethodFragment_zipCodeRules {
+  __typename: "ShippingMethodZipCodeRule";
+  id: string;
+  start: string | null;
+  end: string | null;
+}
+
+export interface ShippingMethodFragment_metadata {
+  __typename: "MetadataItem";
+  key: string;
+  value: string;
+}
+
+export interface ShippingMethodFragment_privateMetadata {
+  __typename: "MetadataItem";
+  key: string;
+  value: string;
 }
 
 export interface ShippingMethodFragment_minimumOrderWeight {
@@ -20,32 +33,57 @@ export interface ShippingMethodFragment_minimumOrderWeight {
   value: number;
 }
 
-export interface ShippingMethodFragment_maximumOrderPrice {
-  __typename: "Money";
-  amount: number;
-  currency: string;
-}
-
 export interface ShippingMethodFragment_maximumOrderWeight {
   __typename: "Weight";
   unit: WeightUnitsEnum;
   value: number;
 }
 
-export interface ShippingMethodFragment_price {
+export interface ShippingMethodFragment_channelListings_channel {
+  __typename: "Channel";
+  id: string;
+  name: string;
+  currencyCode: string;
+}
+
+export interface ShippingMethodFragment_channelListings_price {
   __typename: "Money";
   amount: number;
   currency: string;
 }
 
+export interface ShippingMethodFragment_channelListings_minimumOrderPrice {
+  __typename: "Money";
+  amount: number;
+  currency: string;
+}
+
+export interface ShippingMethodFragment_channelListings_maximumOrderPrice {
+  __typename: "Money";
+  amount: number;
+  currency: string;
+}
+
+export interface ShippingMethodFragment_channelListings {
+  __typename: "ShippingMethodChannelListing";
+  id: string;
+  channel: ShippingMethodFragment_channelListings_channel;
+  price: ShippingMethodFragment_channelListings_price | null;
+  minimumOrderPrice: ShippingMethodFragment_channelListings_minimumOrderPrice | null;
+  maximumOrderPrice: ShippingMethodFragment_channelListings_maximumOrderPrice | null;
+}
+
 export interface ShippingMethodFragment {
   __typename: "ShippingMethod";
   id: string;
-  minimumOrderPrice: ShippingMethodFragment_minimumOrderPrice | null;
+  zipCodeRules: (ShippingMethodFragment_zipCodeRules | null)[] | null;
+  metadata: (ShippingMethodFragment_metadata | null)[];
+  privateMetadata: (ShippingMethodFragment_privateMetadata | null)[];
   minimumOrderWeight: ShippingMethodFragment_minimumOrderWeight | null;
-  maximumOrderPrice: ShippingMethodFragment_maximumOrderPrice | null;
   maximumOrderWeight: ShippingMethodFragment_maximumOrderWeight | null;
+  minimumDeliveryDays: number | null;
+  maximumDeliveryDays: number | null;
   name: string;
-  price: ShippingMethodFragment_price | null;
   type: ShippingMethodTypeEnum | null;
+  channelListings: ShippingMethodFragment_channelListings[] | null;
 }

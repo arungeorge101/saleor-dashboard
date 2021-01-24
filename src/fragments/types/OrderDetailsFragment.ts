@@ -42,35 +42,54 @@ export interface OrderDetailsFragment_billingAddress {
   streetAddress2: string;
 }
 
+export interface OrderDetailsFragment_events_relatedOrder {
+  __typename: "Order";
+  id: string;
+  number: string | null;
+}
+
 export interface OrderDetailsFragment_events_user {
   __typename: "User";
   id: string;
   email: string;
+  firstName: string;
+  lastName: string;
+}
+
+export interface OrderDetailsFragment_events_lines_orderLine {
+  __typename: "OrderLine";
+  id: string;
+  productName: string;
+  variantName: string;
+}
+
+export interface OrderDetailsFragment_events_lines {
+  __typename: "OrderEventOrderLineObject";
+  quantity: number | null;
+  orderLine: OrderDetailsFragment_events_lines_orderLine | null;
 }
 
 export interface OrderDetailsFragment_events {
   __typename: "OrderEvent";
   id: string;
   amount: number | null;
+  shippingCostsIncluded: boolean | null;
   date: any | null;
   email: string | null;
   emailType: OrderEventsEmailsEnum | null;
   invoiceNumber: string | null;
+  relatedOrder: OrderDetailsFragment_events_relatedOrder | null;
   message: string | null;
   quantity: number | null;
+  transactionReference: string | null;
   type: OrderEventsEnum | null;
   user: OrderDetailsFragment_events_user | null;
-}
-
-export interface OrderDetailsFragment_fulfillments_lines_orderLine_variant_product {
-  __typename: "Product";
-  isAvailableForPurchase: boolean | null;
-  isPublished: boolean;
+  lines: (OrderDetailsFragment_events_lines | null)[] | null;
 }
 
 export interface OrderDetailsFragment_fulfillments_lines_orderLine_variant {
   __typename: "ProductVariant";
-  product: OrderDetailsFragment_fulfillments_lines_orderLine_variant_product;
+  id: string;
   quantityAvailable: number;
 }
 
@@ -133,15 +152,9 @@ export interface OrderDetailsFragment_fulfillments {
   warehouse: OrderDetailsFragment_fulfillments_warehouse | null;
 }
 
-export interface OrderDetailsFragment_lines_variant_product {
-  __typename: "Product";
-  isAvailableForPurchase: boolean | null;
-  isPublished: boolean;
-}
-
 export interface OrderDetailsFragment_lines_variant {
   __typename: "ProductVariant";
-  product: OrderDetailsFragment_lines_variant_product;
+  id: string;
   quantityAvailable: number;
 }
 
@@ -294,6 +307,14 @@ export interface OrderDetailsFragment_invoices {
   status: JobStatusEnum;
 }
 
+export interface OrderDetailsFragment_channel {
+  __typename: "Channel";
+  isActive: boolean;
+  id: string;
+  name: string;
+  currencyCode: string;
+}
+
 export interface OrderDetailsFragment {
   __typename: "Order";
   id: string;
@@ -323,4 +344,6 @@ export interface OrderDetailsFragment {
   availableShippingMethods: (OrderDetailsFragment_availableShippingMethods | null)[] | null;
   discount: OrderDetailsFragment_discount | null;
   invoices: (OrderDetailsFragment_invoices | null)[] | null;
+  channel: OrderDetailsFragment_channel;
+  isPaid: boolean | null;
 }

@@ -2,7 +2,9 @@ import DialogContentText from "@material-ui/core/DialogContentText";
 import IconButton from "@material-ui/core/IconButton";
 import DeleteIcon from "@material-ui/icons/Delete";
 import ActionDialog from "@saleor/components/ActionDialog";
+import useAppChannel from "@saleor/components/AppLayout/AppChannelContext";
 import NotFoundPage from "@saleor/components/NotFoundPage";
+import Skeleton from "@saleor/components/Skeleton";
 import { WindowTitle } from "@saleor/components/WindowTitle";
 import useBulkActions from "@saleor/hooks/useBulkActions";
 import useNavigator from "@saleor/hooks/useNavigator";
@@ -13,6 +15,7 @@ import usePaginator, {
 import { commonMessages } from "@saleor/intl";
 import createDialogActionHandlers from "@saleor/utils/handlers/dialogActionHandlers";
 import createMetadataUpdateHandler from "@saleor/utils/handlers/metadataUpdateHandler";
+import { mapNodeToChoice } from "@saleor/utils/maps";
 import {
   useMetadataUpdate,
   usePrivateMetadataUpdate
@@ -27,9 +30,9 @@ import { productAddUrl, productUrl } from "../../products/urls";
 import { CategoryInput } from "../../types/globalTypes";
 import {
   CategoryPageTab,
-  CategoryUpdatePage,
-  FormData
+  CategoryUpdatePage
 } from "../components/CategoryUpdatePage/CategoryUpdatePage";
+import { CategoryUpdateData } from "../components/CategoryUpdatePage/form";
 import {
   useCategoryBulkDeleteMutation,
   useCategoryDeleteMutation,
@@ -77,6 +80,10 @@ export const CategoryDetails: React.FC<CategoryDetailsProps> = ({
     displayLoader: true,
     variables: { ...paginationState, id }
   });
+
+  const { availableChannels, channel } = useAppChannel();
+
+  const channelChoices = mapNodeToChoice(availableChannels);
 
   const category = data?.category;
 
@@ -175,18 +182,19 @@ export const CategoryDetails: React.FC<CategoryDetailsProps> = ({
     params
   );
 
-  const handleUpdate = async (formData: FormData) => {
+  const handleUpdate = async (formData: CategoryUpdateData) => {
     const result = await updateCategory({
       variables: {
         id,
         input: {
           backgroundImageAlt: formData.backgroundImageAlt,
-          descriptionJson: JSON.stringify(formData.description),
+          description: JSON.stringify(formData.description),
           name: formData.name,
           seo: {
             description: formData.seoDescription,
             title: formData.seoTitle
-          }
+          },
+          slug: formData.slug
         }
       }
     });
@@ -200,17 +208,23 @@ export const CategoryDetails: React.FC<CategoryDetailsProps> = ({
     variables => updatePrivateMetadata({ variables })
   );
 
+  if (typeof channel === "undefined") {
+    return <Skeleton />;
+  }
+
   return (
     <>
       <WindowTitle title={maybe(() => data.category.name)} />
       <CategoryUpdatePage
+        channelsCount={availableChannels.length}
+        channelChoices={channelChoices}
         changeTab={changeTab}
         currentTab={params.activeTab}
         category={maybe(() => data.category)}
         disabled={loading}
         errors={updateResult.data?.categoryUpdate.errors || []}
         onAddCategory={() => navigate(categoryAddUrl(id))}
-        onAddProduct={() => navigate(productAddUrl)}
+        onAddProduct={() => navigate(productAddUrl())}
         onBack={() =>
           navigate(
             maybe(() => categoryUrl(data.category.parent.id), categoryListUrl())
@@ -247,6 +261,7 @@ export const CategoryDetails: React.FC<CategoryDetailsProps> = ({
           data.category.products.edges.map(edge => edge.node)
         )}
         saveButtonBarState={updateResult.status}
+        selectedChannelId={channel?.id}
         subcategories={maybe(() =>
           data.category.children.edges.map(edge => edge.node)
         )}

@@ -1,145 +1,138 @@
-import { FormChange } from "@saleor/hooks/useForm";
-import { FormsetChange, FormsetData } from "@saleor/hooks/useFormset";
-import { maybe } from "@saleor/misc";
-import { toggle } from "@saleor/utils/lists";
-
-import { ProductAttributeInputData } from "../components/ProductAttributes";
 import {
-  getAttributeInputFromProductType,
-  ProductAttributeValueChoices,
-  ProductType
-} from "./data";
+  ChannelData,
+  ChannelPriceArgs,
+  ChannelPriceData
+} from "@saleor/channels/utils";
+import { AttributeInputData } from "@saleor/components/Attributes";
+import { FormChange } from "@saleor/hooks/useForm";
+import { FormsetData } from "@saleor/hooks/useFormset";
 
-export function createAttributeChangeHandler(
-  changeAttributeData: FormsetChange<string[]>,
-  setSelectedAttributes: (data: ProductAttributeValueChoices[]) => void,
-  selectedAttributes: ProductAttributeValueChoices[],
-  attributes: FormsetData<ProductAttributeInputData>,
+import { getAttributeInputFromProductType, ProductType } from "./data";
+
+export function createChannelsPriceChangeHandler(
+  channelListings: ChannelPriceData[],
+  updateChannels: (data: ChannelPriceData[]) => void,
   triggerChange: () => void
-): FormsetChange {
-  return (attributeId: string, value: string) => {
-    const attributeValue = attributes
-      .find(attribute => attribute.id === attributeId)
-      .data.values.find(attributeValue => attributeValue.slug === value);
-
-    const valueChoice = {
-      label: maybe(() => attributeValue.name, value),
-      value
-    };
-
-    const itemIndex = selectedAttributes.findIndex(
-      item => item.id === attributeId
+) {
+  return (id: string, priceData: ChannelPriceArgs) => {
+    const { costPrice, price } = priceData;
+    const channelIndex = channelListings.findIndex(
+      channel => channel.id === id
     );
-    const attribute = selectedAttributes[itemIndex];
+    const channel = channelListings[channelIndex];
 
-    setSelectedAttributes([
-      ...selectedAttributes.slice(0, itemIndex),
+    const updatedChannels = [
+      ...channelListings.slice(0, channelIndex),
       {
-        ...attribute,
-        values: [valueChoice]
+        ...channel,
+        costPrice,
+        price
       },
-      ...selectedAttributes.slice(itemIndex + 1)
-    ]);
-
+      ...channelListings.slice(channelIndex + 1)
+    ];
+    updateChannels(updatedChannels);
     triggerChange();
-    changeAttributeData(attributeId, [value]);
   };
 }
 
-export function createAttributeMultiChangeHandler(
-  changeAttributeData: FormsetChange<string[]>,
-  setSelectedAttributes: (data: ProductAttributeValueChoices[]) => void,
-  selectedAttributes: ProductAttributeValueChoices[],
-  attributes: FormsetData<ProductAttributeInputData>,
+export function createChannelsChangeHandler(
+  channelListings: ChannelData[],
+  updateChannels: (data: ChannelData[]) => void,
   triggerChange: () => void
-): FormsetChange {
-  return (attributeId: string, value: string) => {
-    const attributeValue = attributes
-      .find(attribute => attribute.id === attributeId)
-      .data.values.find(attributeValue => attributeValue.slug === value);
-
-    const valueChoice = {
-      label: attributeValue ? attributeValue.name : value,
-      value
-    };
-
-    const itemIndex = selectedAttributes.findIndex(
-      item => item.id === attributeId
+) {
+  return (
+    id: string,
+    data: Omit<ChannelData, "name" | "price" | "currency" | "id">
+  ) => {
+    const channelIndex = channelListings.findIndex(
+      channel => channel.id === id
     );
-    const attributeValues = selectedAttributes[itemIndex].values;
+    const channel = channelListings[channelIndex];
 
-    const newAttributeValues = toggle(
-      valueChoice,
-      attributeValues,
-      (a, b) => a.value === b.value
-    );
-
-    const newSelectedAttributes = [
-      ...selectedAttributes.slice(0, itemIndex),
+    const updatedChannels = [
+      ...channelListings.slice(0, channelIndex),
       {
-        ...selectedAttributes[itemIndex],
-        values: newAttributeValues
+        ...channel,
+        ...data
       },
-      ...selectedAttributes.slice(itemIndex + 1)
+      ...channelListings.slice(channelIndex + 1)
     ];
-    setSelectedAttributes(newSelectedAttributes);
-
+    updateChannels(updatedChannels);
     triggerChange();
-    changeAttributeData(
-      attributeId,
-      newAttributeValues.map(({ value }) => value)
+  };
+}
+
+export function createVariantChannelsChangeHandler(
+  channelListings: ChannelPriceData[],
+  setData: (data: ChannelPriceData[]) => void,
+  triggerChange: () => void
+) {
+  return (id: string, priceData: ChannelPriceArgs) => {
+    const { costPrice, price } = priceData;
+    const channelIndex = channelListings.findIndex(
+      channel => channel.id === id
     );
+    const channel = channelListings[channelIndex];
+
+    const updatedChannels = [
+      ...channelListings.slice(0, channelIndex),
+      {
+        ...channel,
+        costPrice,
+        price
+      },
+      ...channelListings.slice(channelIndex + 1)
+    ];
+    setData(updatedChannels);
+    triggerChange();
   };
 }
 
 export function createProductTypeSelectHandler(
-  change: FormChange,
-  setAttributes: (data: FormsetData<ProductAttributeInputData>) => void,
-  setSelectedAttributes: (data: ProductAttributeValueChoices[]) => void,
+  setAttributes: (data: FormsetData<AttributeInputData>) => void,
   setProductType: (productType: ProductType) => void,
-  productTypeChoiceList: ProductType[]
+  productTypeChoiceList: ProductType[],
+  triggerChange: () => void
 ): FormChange {
   return (event: React.ChangeEvent<any>) => {
     const id = event.target.value;
     const selectedProductType = productTypeChoiceList.find(
       productType => productType.id === id
     );
+    triggerChange();
     setProductType(selectedProductType);
-    change(event);
-
     setAttributes(getAttributeInputFromProductType(selectedProductType));
-    setSelectedAttributes(
-      selectedProductType.productAttributes.map(attribute => ({
-        id: attribute.id,
-        values: []
-      }))
-    );
   };
 }
 
-interface ProductAvailabilityArgs {
-  availableForPurchase: string | null;
-  isAvailableForPurchase: boolean;
-  productId: string;
-}
+export const getChannelsInput = (channels: ChannelPriceData[]) =>
+  channels?.map(channel => ({
+    data: channel,
+    id: channel.id,
+    label: channel.name,
+    value: {
+      costPrice: channel.costPrice || "",
+      price: channel.price || ""
+    }
+  }));
 
-export function getProductAvailabilityVariables({
-  isAvailableForPurchase,
-  availableForPurchase,
-  productId
-}: ProductAvailabilityArgs) {
-  const isAvailable =
-    availableForPurchase && !isAvailableForPurchase
-      ? true
-      : isAvailableForPurchase;
+export const getAvailabilityVariables = (channels: ChannelData[]) =>
+  channels.map(channel => {
+    const { isAvailableForPurchase, availableForPurchase } = channel;
+    const isAvailable =
+      availableForPurchase && !isAvailableForPurchase
+        ? true
+        : isAvailableForPurchase;
 
-  return {
-    isAvailable,
-    productId,
-    startDate: isAvailableForPurchase
-      ? null
-      : availableForPurchase !== ""
-      ? availableForPurchase
-      : null
-  };
-}
+    return {
+      availableForPurchaseDate:
+        isAvailableForPurchase || availableForPurchase === ""
+          ? null
+          : availableForPurchase,
+      channelId: channel.id,
+      isAvailableForPurchase: isAvailable,
+      isPublished: channel.isPublished,
+      publicationDate: channel.publicationDate,
+      visibleInListings: channel.visibleInListings
+    };
+  });

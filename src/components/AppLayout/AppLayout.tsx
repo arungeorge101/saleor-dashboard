@@ -7,6 +7,7 @@ import useNavigator from "@saleor/hooks/useNavigator";
 import useTheme from "@saleor/hooks/useTheme";
 import useUser from "@saleor/hooks/useUser";
 import { staffMemberDetailsUrl } from "@saleor/staff/urls";
+import classNames from "classnames";
 import React from "react";
 import { useIntl } from "react-intl";
 import useRouter from "use-react-router";
@@ -19,10 +20,11 @@ import SideBar from "../SideBar";
 import SideBarDrawer from "../SideBarDrawer/SideBarDrawer";
 import UserChip from "../UserChip";
 import AppActionContext from "./AppActionContext";
+import useAppChannel from "./AppChannelContext";
+import AppChannelSelect from "./AppChannelSelect";
 import AppHeaderContext from "./AppHeaderContext";
 import { appLoaderHeight } from "./consts";
 import createMenuStructure from "./menuStructure";
-import ThemeSwitch from "./ThemeSwitch";
 
 const useStyles = makeStyles(
   theme => ({
@@ -35,6 +37,9 @@ const useStyles = makeStyles(
       gridColumn: 2,
       position: "sticky",
       zIndex: 10
+    },
+    appActionDocked: {
+      position: "static"
     },
     appLoader: {
       height: appLoaderHeight,
@@ -75,9 +80,10 @@ const useStyles = makeStyles(
         height: "auto"
       }
     },
-
     root: {
-      display: "flex",
+      [theme.breakpoints.up("md")]: {
+        display: "flex"
+      },
       width: `100%`
     },
     spacer: {
@@ -98,7 +104,7 @@ const useStyles = makeStyles(
       }
     },
     viewContainer: {
-      minHeight: `calc(100vh - ${theme.spacing(4) + appLoaderHeight + 120}px)`
+      minHeight: `calc(100vh - ${theme.spacing(2) + appLoaderHeight + 70}px)`
     }
   }),
   {
@@ -122,6 +128,13 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
   const { location } = useRouter();
   const [isNavigatorVisible, setNavigatorVisibility] = React.useState(false);
   const isMdUp = useMediaQuery((theme: Theme) => theme.breakpoints.up("md"));
+  const [docked, setDocked] = React.useState(true);
+  const {
+    availableChannels,
+    channel,
+    isPickerActive,
+    setChannel
+  } = useAppChannel(false);
 
   const menuStructure = createMenuStructure(intl);
   const configurationMenu = createConfigurationMenu(intl);
@@ -153,7 +166,13 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
         setVisibility={setNavigatorVisibility}
       />
       <AppHeaderContext.Provider value={appHeaderAnchor}>
-        <AppActionContext.Provider value={appActionAnchor}>
+        <AppActionContext.Provider
+          value={{
+            anchor: appActionAnchor,
+            docked,
+            setDocked
+          }}
+        >
           <div className={classes.root}>
             {isMdUp && (
               <SideBar
@@ -190,23 +209,28 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
                         )}
                         <div className={classes.spacer} />
                         <div className={classes.userBar}>
-                          <ThemeSwitch
-                            className={classes.darkThemeSwitch}
-                            checked={isDark}
-                            onClick={toggleTheme}
-                          />
                           <NavigatorButton
                             isMac={navigator.platform
                               .toLowerCase()
                               .includes("mac")}
                             onClick={() => setNavigatorVisibility(true)}
                           />
+                          {channel && (
+                            <AppChannelSelect
+                              channels={availableChannels}
+                              disabled={!isPickerActive}
+                              selectedChannelId={channel.id}
+                              onChannelSelect={setChannel}
+                            />
+                          )}
                           <UserChip
+                            isDarkThemeEnabled={isDark}
+                            user={user}
                             onLogout={logout}
                             onProfileClick={() =>
                               navigate(staffMemberDetailsUrl(user.id))
                             }
-                            user={user}
+                            onThemeToggle={toggleTheme}
                           />
                         </div>
                       </div>
@@ -215,13 +239,21 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
                 </div>
                 <main className={classes.view}>
                   {appState.error
-                    ? appState.error === "unhandled" && (
-                        <ErrorPage onBack={handleErrorBack} />
+                    ? appState.error.type === "unhandled" && (
+                        <ErrorPage
+                          id={appState.error.id}
+                          onBack={handleErrorBack}
+                        />
                       )
                     : children}
                 </main>
               </div>
-              <div className={classes.appAction} ref={appActionAnchor} />
+              <div
+                className={classNames(classes.appAction, {
+                  [classes.appActionDocked]: docked
+                })}
+                ref={appActionAnchor}
+              />
             </div>
           </div>
         </AppActionContext.Provider>

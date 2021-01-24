@@ -1,5 +1,6 @@
-import { ShippingZoneDetailsFragment } from "@saleor/fragments/types/ShippingZoneDetailsFragment";
 import { ShippingZoneFragment } from "@saleor/fragments/types/ShippingZoneFragment";
+import { SearchProducts_search_edges_node } from "@saleor/searches/types/SearchProducts";
+import { ShippingZone_shippingZone } from "@saleor/shipping/types/ShippingZone";
 
 import { ShippingMethodTypeEnum, WeightUnitsEnum } from "../types/globalTypes";
 
@@ -263,8 +264,11 @@ export const shippingZones: ShippingZoneFragment[] = [
         country: "Wielka Brytania"
       }
     ],
+    description: "Shipping zone description",
     id: "U2hpcHBpbmdab25lOjE=",
-    name: "Europe"
+    metadata: [],
+    name: "Europe",
+    privateMetadata: []
   },
   {
     __typename: "ShippingZone",
@@ -415,12 +419,14 @@ export const shippingZones: ShippingZoneFragment[] = [
         country: "Wallis i Futuna"
       }
     ],
+    description: "Shipping zone description",
     id: "U2hpcHBpbmdab25lOjI=",
-    name: "Oceania"
+    metadata: [],
+    name: "Oceania",
+    privateMetadata: []
   },
   {
     __typename: "ShippingZone",
-
     countries: [
       {
         __typename: "CountryDisplay",
@@ -678,12 +684,14 @@ export const shippingZones: ShippingZoneFragment[] = [
         country: "Jemen"
       }
     ],
+    description: "Shipping zone description",
     id: "U2hpcHBpbmdab25lOjM=",
-    name: "Asia"
+    metadata: [],
+    name: "Asia",
+    privateMetadata: []
   },
   {
     __typename: "ShippingZone",
-
     countries: [
       {
         __typename: "CountryDisplay",
@@ -971,12 +979,14 @@ export const shippingZones: ShippingZoneFragment[] = [
         country: "Wyspy Dziewicze Stanów Zjednoczonych"
       }
     ],
+    description: "Shipping zone description",
     id: "U2hpcHBpbmdab25lOjQ=",
-    name: "Americas"
+    metadata: [],
+    name: "Americas",
+    privateMetadata: []
   },
   {
     __typename: "ShippingZone",
-
     countries: [
       {
         __typename: "CountryDisplay",
@@ -1280,12 +1290,15 @@ export const shippingZones: ShippingZoneFragment[] = [
         country: "Zimbabwe"
       }
     ],
+    description: "Shipping zone description",
     id: "U2hpcHBpbmdab25lOjU=",
-    name: "Africa"
+    metadata: [],
+    name: "Africa",
+    privateMetadata: []
   }
 ];
 
-export const shippingZone: ShippingZoneDetailsFragment = {
+export const shippingZone: ShippingZone_shippingZone = {
   __typename: "ShippingZone",
   countries: [
     {
@@ -1545,105 +1558,272 @@ export const shippingZone: ShippingZoneDetailsFragment = {
     }
   ],
   default: false,
+  description: "Shipping zone description",
   id: "U2hpcHBpbmdab25lOjE=",
+  metadata: [],
   name: "Europe",
+  privateMetadata: [],
   shippingMethods: [
     {
       __typename: "ShippingMethod",
+      channelListings: [
+        {
+          __typename: "ShippingMethodChannelListing",
+          channel: {
+            __typename: "Channel",
+            currencyCode: "USD",
+            id: "Q2hhbm5lbDo5",
+            name: "Channel USD"
+          },
+          id: "U2hpcHBpbmdNZXRob2RDaGFubmVsTGlzdGluZzo0",
+          maximumOrderPrice: {
+            __typename: "Money",
+            amount: 2,
+            currency: "USD"
+          },
+          minimumOrderPrice: {
+            __typename: "Money",
+            amount: 1,
+            currency: "USD"
+          },
+          price: {
+            __typename: "Money",
+            amount: 86.21,
+            currency: "USD"
+          }
+        }
+      ],
+      excludedProducts: {
+        __typename: "ProductCountableConnection",
+        edges: [
+          {
+            __typename: "ProductCountableEdge",
+            node: {
+              __typename: "Product",
+              id: "1",
+              name: "Apple Juice",
+              thumbnail: {
+                __typename: "Image",
+                url: ""
+              }
+            }
+          }
+        ],
+        pageInfo: {
+          __typename: "PageInfo",
+          endCursor: "",
+          hasNextPage: false,
+          hasPreviousPage: false,
+          startCursor: ""
+        }
+      },
       id: "U2hpcHBpbmdNZXRob2Q6NA==",
-      maximumOrderPrice: null,
+      maximumDeliveryDays: 10,
       maximumOrderWeight: {
         __typename: "Weight",
         unit: WeightUnitsEnum.KG,
         value: 80
       },
-      minimumOrderPrice: {
-        __typename: "Money",
-        amount: 0,
-        currency: "USD"
-      },
+      metadata: [],
+      minimumDeliveryDays: 0,
       minimumOrderWeight: {
         __typename: "Weight",
         unit: WeightUnitsEnum.KG,
         value: 0
       },
       name: "DB Schenker",
-      price: {
-        __typename: "Money",
-        amount: 45.93,
-        currency: "USD"
-      },
-      type: ShippingMethodTypeEnum.WEIGHT
+      privateMetadata: [],
+      type: ShippingMethodTypeEnum.WEIGHT,
+      zipCodeRules: [
+        {
+          __typename: "ShippingMethodZipCodeRule",
+          end: "51-220",
+          id: "1",
+          start: "51-210"
+        },
+        {
+          __typename: "ShippingMethodZipCodeRule",
+          end: "51-240",
+          id: "2",
+          start: "51-235"
+        },
+        {
+          __typename: "ShippingMethodZipCodeRule",
+          end: null,
+          id: "2",
+          start: "51-274"
+        }
+      ]
     },
     {
       __typename: "ShippingMethod",
-      id: "U2hpcHBpbmdNZXRob2Q6Mw==",
-      maximumOrderPrice: null,
-      maximumOrderWeight: null,
-      minimumOrderPrice: {
-        __typename: "Money",
-        amount: 0,
-        currency: "USD"
+      channelListings: [],
+      excludedProducts: {
+        __typename: "ProductCountableConnection",
+        edges: [
+          {
+            __typename: "ProductCountableEdge",
+            node: {
+              __typename: "Product",
+              id: "1",
+              name: "Apple Juice",
+              thumbnail: {
+                __typename: "Image",
+                url: ""
+              }
+            }
+          }
+        ],
+        pageInfo: {
+          __typename: "PageInfo",
+          endCursor: "",
+          hasNextPage: false,
+          hasPreviousPage: false,
+          startCursor: ""
+        }
       },
+      id: "U2hpcHBpbmdNZXRob2Q6Mw==",
+      maximumDeliveryDays: 10,
+      maximumOrderWeight: null,
+      metadata: [],
+      minimumDeliveryDays: 0,
       minimumOrderWeight: {
         __typename: "Weight",
         unit: WeightUnitsEnum.KG,
         value: 0
       },
       name: "Registred priority",
-      price: {
-        __typename: "Money",
-        amount: 73.87,
-        currency: "USD"
-      },
-      type: ShippingMethodTypeEnum.WEIGHT
+      privateMetadata: [],
+      type: ShippingMethodTypeEnum.WEIGHT,
+      zipCodeRules: [
+        {
+          __typename: "ShippingMethodZipCodeRule",
+          end: "51-220",
+          id: "1",
+          start: "51-210"
+        },
+        {
+          __typename: "ShippingMethodZipCodeRule",
+          end: "51-240",
+          id: "2",
+          start: "51-235"
+        },
+        {
+          __typename: "ShippingMethodZipCodeRule",
+          end: null,
+          id: "2",
+          start: "51-274"
+        }
+      ]
     },
     {
       __typename: "ShippingMethod",
-      id: "U2hpcHBpbmdNZXRob2Q6Mg==",
-      maximumOrderPrice: null,
-      maximumOrderWeight: null,
-      minimumOrderPrice: {
-        __typename: "Money",
-        amount: 0,
-        currency: "USD"
+      channelListings: [],
+      excludedProducts: {
+        __typename: "ProductCountableConnection",
+        edges: [
+          {
+            __typename: "ProductCountableEdge",
+            node: {
+              __typename: "Product",
+              id: "1",
+              name: "Apple Juice",
+              thumbnail: {
+                __typename: "Image",
+                url: ""
+              }
+            }
+          }
+        ],
+        pageInfo: {
+          __typename: "PageInfo",
+          endCursor: "",
+          hasNextPage: false,
+          hasPreviousPage: false,
+          startCursor: ""
+        }
       },
+      id: "U2hpcHBpbmdNZXRob2Q6Mg==",
+      maximumDeliveryDays: 10,
+      maximumOrderWeight: null,
+      metadata: [],
+      minimumDeliveryDays: 0,
       minimumOrderWeight: {
         __typename: "Weight",
         unit: WeightUnitsEnum.KG,
         value: 0
       },
-
       name: "UPS",
-      price: {
-        __typename: "Money",
-        amount: 48.11,
-        currency: "USD"
-      },
-      type: ShippingMethodTypeEnum.PRICE
+      privateMetadata: [],
+      type: ShippingMethodTypeEnum.PRICE,
+      zipCodeRules: [
+        {
+          __typename: "ShippingMethodZipCodeRule",
+          end: "51-220",
+          id: "1",
+          start: "51-210"
+        },
+        {
+          __typename: "ShippingMethodZipCodeRule",
+          end: "51-240",
+          id: "2",
+          start: "51-235"
+        },
+        {
+          __typename: "ShippingMethodZipCodeRule",
+          end: null,
+          id: "2",
+          start: "51-274"
+        }
+      ]
     },
     {
       __typename: "ShippingMethod",
-      id: "U2hpcHBpbmdNZXRob2Q6MQ==",
-      maximumOrderPrice: null,
-      maximumOrderWeight: null,
-      minimumOrderPrice: {
-        __typename: "Money",
-        amount: 0,
-        currency: "USD"
+      channelListings: [],
+      excludedProducts: {
+        __typename: "ProductCountableConnection",
+        edges: [],
+        pageInfo: {
+          __typename: "PageInfo",
+          endCursor: "",
+          hasNextPage: false,
+          hasPreviousPage: false,
+          startCursor: ""
+        }
       },
+      id: "U2hpcHBpbmdNZXRob2Q6MQ==",
+      maximumDeliveryDays: 10,
+      maximumOrderWeight: null,
+      metadata: [],
+      minimumDeliveryDays: 0,
       minimumOrderWeight: {
         __typename: "Weight",
         unit: WeightUnitsEnum.KG,
         value: 0
       },
       name: "DHL",
-      price: {
-        __typename: "Money",
-        amount: 95.24,
-        currency: "USD"
-      },
-      type: ShippingMethodTypeEnum.PRICE
+      privateMetadata: [],
+      type: ShippingMethodTypeEnum.PRICE,
+      zipCodeRules: [
+        {
+          __typename: "ShippingMethodZipCodeRule",
+          end: "51-220",
+          id: "1",
+          start: "51-210"
+        },
+        {
+          __typename: "ShippingMethodZipCodeRule",
+          end: "51-240",
+          id: "2",
+          start: "51-235"
+        },
+        {
+          __typename: "ShippingMethodZipCodeRule",
+          end: null,
+          id: "2",
+          start: "51-274"
+        }
+      ]
     }
   ],
   warehouses: [
@@ -1659,3 +1839,24 @@ export const shippingZone: ShippingZoneDetailsFragment = {
     }
   ]
 };
+
+export const products: SearchProducts_search_edges_node[] = [
+  {
+    __typename: "Product",
+    id: "1",
+    name: "Apple Juice",
+    thumbnail: {
+      __typename: "Image",
+      url: ""
+    }
+  },
+  {
+    __typename: "Product",
+    id: "2",
+    name: "Banana Juice",
+    thumbnail: {
+      __typename: "Image",
+      url: ""
+    }
+  }
+];

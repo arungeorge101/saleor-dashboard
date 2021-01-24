@@ -7,22 +7,27 @@ import {
   Timeline,
   TimelineAddNote,
   TimelineEvent,
+  TimelineEventProps,
   TimelineNote
 } from "@saleor/components/Timeline";
-import React from "react";
-import { FormattedMessage, IntlShape, useIntl } from "react-intl";
-
+import { TitleElement } from "@saleor/components/Timeline/TimelineEventHeader";
+import { OrderDetails_order_events } from "@saleor/orders/types/OrderDetails";
+import { orderUrl } from "@saleor/orders/urls";
 import {
   OrderEventsEmailsEnum,
   OrderEventsEnum
-} from "../../../types/globalTypes";
-import { OrderDetails_order_events } from "../../types/OrderDetails";
+} from "@saleor/types/globalTypes";
+import React from "react";
+import { defineMessages } from "react-intl";
+import { FormattedMessage, IntlShape, useIntl } from "react-intl";
 
-export interface FormData {
-  message: string;
-}
+import ExtendedTimelineEvent from "./ExtendedTimelineEvent";
+import { getEventSecondaryTitle, isTimelineEventOfType } from "./utils";
 
-const getEventMessage = (event: OrderDetails_order_events, intl: IntlShape) => {
+export const getEventMessage = (
+  event: OrderDetails_order_events,
+  intl: IntlShape
+) => {
   switch (event.type) {
     case OrderEventsEnum.CANCELED:
       return intl.formatMessage({
@@ -144,6 +149,16 @@ const getEventMessage = (event: OrderDetails_order_events, intl: IntlShape) => {
           quantity: event.quantity
         }
       );
+    case OrderEventsEnum.FULFILLMENT_REFUNDED:
+      return intl.formatMessage(
+        {
+          defaultMessage: "Order was refunded by {refundedBy}",
+          description: "order history message"
+        },
+        {
+          refundedBy: event.user ? event.user.email : null
+        }
+      );
     case OrderEventsEnum.FULFILLMENT_RESTOCKED_ITEMS:
       return intl.formatMessage(
         {
@@ -166,7 +181,7 @@ const getEventMessage = (event: OrderDetails_order_events, intl: IntlShape) => {
       });
     case OrderEventsEnum.ORDER_MARKED_AS_PAID:
       return intl.formatMessage({
-        defaultMessage: "Marked order as paid",
+        defaultMessage: "Order was marked as paid",
         description: "order history message"
       });
     case OrderEventsEnum.OTHER:
@@ -226,16 +241,42 @@ const getEventMessage = (event: OrderDetails_order_events, intl: IntlShape) => {
         defaultMessage: "Payment was authorized",
         description: "order history message"
       });
+    case OrderEventsEnum.CONFIRMED:
+      return intl.formatMessage({
+        defaultMessage: "Order was confirmed",
+        description: "order history message"
+      });
     case OrderEventsEnum.EXTERNAL_SERVICE_NOTIFICATION:
       return event.message;
   }
 };
 
+export const replacementCreatedMessages = defineMessages({
+  description: {
+    defaultMessage: "was created for replaced products",
+    description: "replacement created order history message description"
+  },
+  draftNumber: {
+    defaultMessage: "Draft #{orderNumber} ",
+    description: "replacement created order history message draft number"
+  }
+});
+
+export interface FormData {
+  message: string;
+}
+
 const useStyles = makeStyles(
   theme => ({
+    eventSubtitle: {
+      marginTop: theme.spacing(1)
+    },
     header: {
       fontWeight: 500,
       marginBottom: theme.spacing(1)
+    },
+    linesTableCell: {
+      paddingRight: theme.spacing(3)
     },
     root: { marginTop: theme.spacing(4) },
     user: {
@@ -247,14 +288,54 @@ const useStyles = makeStyles(
 
 interface OrderHistoryProps {
   history: OrderDetails_order_events[];
+  orderCurrency: string;
   onNoteAdd: (data: FormData) => void;
 }
 
 const OrderHistory: React.FC<OrderHistoryProps> = props => {
-  const { history, onNoteAdd } = props;
+  const { history, orderCurrency, onNoteAdd } = props;
   const classes = useStyles(props);
 
   const intl = useIntl();
+
+  const getTimelineEventTitleProps = (
+    event: OrderDetails_order_events
+  ): Partial<TimelineEventProps> => {
+    const { type, message } = event;
+
+    const title = isTimelineEventOfType("rawMessage", type)
+      ? message
+      : getEventMessage(event, intl);
+
+    if (isTimelineEventOfType("secondaryTitle", type)) {
+      return {
+        secondaryTitle: intl.formatMessage(...getEventSecondaryTitle(event)),
+        title
+      };
+    }
+
+    return { title };
+  };
+
+  const getTitleElements = (
+    event: OrderDetails_order_events
+  ): TitleElement[] => {
+    const { type, relatedOrder } = event;
+
+    switch (type) {
+      case OrderEventsEnum.ORDER_REPLACEMENT_CREATED: {
+        return [
+          {
+            link: orderUrl(relatedOrder?.id),
+            text: intl.formatMessage(replacementCreatedMessages.draftNumber, {
+              orderNumber: relatedOrder?.number
+            })
+          },
+          { text: intl.formatMessage(replacementCreatedMessages.description) }
+        ];
+      }
+    }
+  };
 
   return (
     <div className={classes.root}>
@@ -278,21 +359,42 @@ const OrderHistory: React.FC<OrderHistoryProps> = props => {
             .slice()
             .reverse()
             .map(event => {
-              if (event.type === OrderEventsEnum.NOTE_ADDED) {
+              const { id, user, date, message, type } = event;
+
+              if (isTimelineEventOfType("note", type)) {
                 return (
                   <TimelineNote
-                    date={event.date}
-                    user={event.user}
-                    message={event.message}
-                    key={event.id}
+                    date={date}
+                    user={user}
+                    message={message}
+                    key={id}
                   />
                 );
               }
+              if (isTimelineEventOfType("extendable", type)) {
+                return (
+                  <ExtendedTimelineEvent
+                    event={event}
+                    orderCurrency={orderCurrency}
+                  />
+                );
+              }
+
+              if (isTimelineEventOfType("linked", type)) {
+                return (
+                  <TimelineEvent
+                    titleElements={getTitleElements(event)}
+                    key={id}
+                    date={date}
+                  />
+                );
+              }
+
               return (
                 <TimelineEvent
-                  date={event.date}
-                  title={getEventMessage(event, intl)}
-                  key={event.id}
+                  {...getTimelineEventTitleProps(event)}
+                  key={id}
+                  date={date}
                 />
               );
             })}

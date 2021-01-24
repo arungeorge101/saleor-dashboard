@@ -1,6 +1,10 @@
-import { shippingErrorFragment } from "@saleor/fragments/errors";
+import {
+  shippingChannelsErrorFragment,
+  shippingErrorFragment
+} from "@saleor/fragments/errors";
 import {
   shippingMethodFragment,
+  shippingMethodWithZipCodesFragment,
   shippingZoneDetailsFragment
 } from "@saleor/fragments/shipping";
 import { countryFragment } from "@saleor/fragments/taxes";
@@ -31,6 +35,26 @@ import {
   DeleteShippingZone,
   DeleteShippingZoneVariables
 } from "./types/DeleteShippingZone";
+import {
+  ShippingMethodChannelListingUpdate,
+  ShippingMethodChannelListingUpdateVariables
+} from "./types/ShippingMethodChannelListingUpdate";
+import {
+  ShippingMethodZipCodeRangeAssign,
+  ShippingMethodZipCodeRangeAssignVariables
+} from "./types/ShippingMethodZipCodeRangeAssign";
+import {
+  ShippingMethodZipCodeRangeUnassign,
+  ShippingMethodZipCodeRangeUnassignVariables
+} from "./types/ShippingMethodZipCodeRangeUnassign";
+import {
+  ShippingPriceExcludeProduct,
+  ShippingPriceExcludeProductVariables
+} from "./types/ShippingPriceExcludeProduct";
+import {
+  ShippingPriceRemoveProductFromExclude,
+  ShippingPriceRemoveProductFromExcludeVariables
+} from "./types/ShippingPriceRemoveProductFromExclude";
 import {
   UpdateDefaultWeightUnit,
   UpdateDefaultWeightUnitVariables
@@ -161,6 +185,7 @@ export const useShippingRateUpdate = makeMutation<
 
 const createShippingRate = gql`
   ${shippingErrorFragment}
+  ${shippingMethodFragment}
   ${shippingZoneDetailsFragment}
   mutation CreateShippingRate($input: ShippingPriceInput!) {
     shippingPriceCreate(input: $input) {
@@ -169,6 +194,9 @@ const createShippingRate = gql`
       }
       shippingZone {
         ...ShippingZoneDetailsFragment
+      }
+      shippingMethod {
+        ...ShippingMethodFragment
       }
     }
   }
@@ -211,3 +239,104 @@ export const useShippingRateBulkDelete = makeMutation<
   BulkDeleteShippingRate,
   BulkDeleteShippingRateVariables
 >(bulkDeleteShippingRate);
+
+export const shippingMethodChannelListingUpdate = gql`
+  ${shippingChannelsErrorFragment}
+  ${shippingMethodFragment}
+  mutation ShippingMethodChannelListingUpdate(
+    $id: ID!
+    $input: ShippingMethodChannelListingInput!
+  ) {
+    shippingMethodChannelListingUpdate(id: $id, input: $input) {
+      shippingMethod {
+        ...ShippingMethodFragment
+      }
+      errors: shippingErrors {
+        ...ShippingChannelsErrorFragment
+      }
+    }
+  }
+`;
+
+export const useShippingMethodChannelListingUpdate = makeMutation<
+  ShippingMethodChannelListingUpdate,
+  ShippingMethodChannelListingUpdateVariables
+>(shippingMethodChannelListingUpdate);
+
+export const shippingMethodZipCodeRangeAssign = gql`
+  ${shippingChannelsErrorFragment}
+  ${shippingMethodWithZipCodesFragment}
+  mutation ShippingMethodZipCodeRangeAssign(
+    $id: ID!
+    $input: ShippingZipCodeRulesCreateInput!
+  ) {
+    shippingMethodZipCodeRulesCreate(shippingMethodId: $id, input: $input) {
+      errors: shippingErrors {
+        ...ShippingChannelsErrorFragment
+      }
+      shippingMethod {
+        ...ShippingMethodWithZipCodesFragment
+      }
+    }
+  }
+`;
+
+export const useShippingMethodZipCodeRangeAssign = makeMutation<
+  ShippingMethodZipCodeRangeAssign,
+  ShippingMethodZipCodeRangeAssignVariables
+>(shippingMethodZipCodeRangeAssign);
+
+export const shippingMethodZipCodeRulesDelete = gql`
+  ${shippingChannelsErrorFragment}
+  ${shippingMethodWithZipCodesFragment}
+  mutation ShippingMethodZipCodeRangeUnassign($id: ID!) {
+    shippingMethodZipCodeRulesDelete(id: $id) {
+      errors: shippingErrors {
+        ...ShippingChannelsErrorFragment
+      }
+      shippingMethod {
+        ...ShippingMethodWithZipCodesFragment
+      }
+    }
+  }
+`;
+
+export const useShippingMethodZipCodeRangeUnassign = makeMutation<
+  ShippingMethodZipCodeRangeUnassign,
+  ShippingMethodZipCodeRangeUnassignVariables
+>(shippingMethodZipCodeRulesDelete);
+
+export const shippingPriceExcludeProducts = gql`
+  ${shippingErrorFragment}
+  mutation ShippingPriceExcludeProduct(
+    $id: ID!
+    $input: ShippingPriceExcludeProductsInput!
+  ) {
+    shippingPriceExcludeProducts(id: $id, input: $input) {
+      errors: shippingErrors {
+        ...ShippingErrorFragment
+      }
+    }
+  }
+`;
+
+export const useShippingPriceExcludeProduct = makeMutation<
+  ShippingPriceExcludeProduct,
+  ShippingPriceExcludeProductVariables
+>(shippingPriceExcludeProducts);
+
+export const shippingPriceRemoveProductsFromExclude = gql`
+  ${shippingErrorFragment}
+  mutation ShippingPriceRemoveProductFromExclude($id: ID!, $products: [ID]!) {
+    shippingPriceRemoveProductFromExclude(id: $id, products: $products) {
+      errors: shippingErrors {
+        ...ShippingErrorFragment
+      }
+    }
+  }
+`;
+
+export const useShippingPriceRemoveProductsFromExclude = makeMutation<
+  ShippingPriceRemoveProductFromExclude,
+  ShippingPriceRemoveProductFromExcludeVariables
+>(shippingPriceRemoveProductsFromExclude);

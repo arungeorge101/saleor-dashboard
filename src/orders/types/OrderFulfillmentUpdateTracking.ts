@@ -48,35 +48,54 @@ export interface OrderFulfillmentUpdateTracking_orderFulfillmentUpdateTracking_o
   streetAddress2: string;
 }
 
+export interface OrderFulfillmentUpdateTracking_orderFulfillmentUpdateTracking_order_events_relatedOrder {
+  __typename: "Order";
+  id: string;
+  number: string | null;
+}
+
 export interface OrderFulfillmentUpdateTracking_orderFulfillmentUpdateTracking_order_events_user {
   __typename: "User";
   id: string;
   email: string;
+  firstName: string;
+  lastName: string;
+}
+
+export interface OrderFulfillmentUpdateTracking_orderFulfillmentUpdateTracking_order_events_lines_orderLine {
+  __typename: "OrderLine";
+  id: string;
+  productName: string;
+  variantName: string;
+}
+
+export interface OrderFulfillmentUpdateTracking_orderFulfillmentUpdateTracking_order_events_lines {
+  __typename: "OrderEventOrderLineObject";
+  quantity: number | null;
+  orderLine: OrderFulfillmentUpdateTracking_orderFulfillmentUpdateTracking_order_events_lines_orderLine | null;
 }
 
 export interface OrderFulfillmentUpdateTracking_orderFulfillmentUpdateTracking_order_events {
   __typename: "OrderEvent";
   id: string;
   amount: number | null;
+  shippingCostsIncluded: boolean | null;
   date: any | null;
   email: string | null;
   emailType: OrderEventsEmailsEnum | null;
   invoiceNumber: string | null;
+  relatedOrder: OrderFulfillmentUpdateTracking_orderFulfillmentUpdateTracking_order_events_relatedOrder | null;
   message: string | null;
   quantity: number | null;
+  transactionReference: string | null;
   type: OrderEventsEnum | null;
   user: OrderFulfillmentUpdateTracking_orderFulfillmentUpdateTracking_order_events_user | null;
-}
-
-export interface OrderFulfillmentUpdateTracking_orderFulfillmentUpdateTracking_order_fulfillments_lines_orderLine_variant_product {
-  __typename: "Product";
-  isAvailableForPurchase: boolean | null;
-  isPublished: boolean;
+  lines: (OrderFulfillmentUpdateTracking_orderFulfillmentUpdateTracking_order_events_lines | null)[] | null;
 }
 
 export interface OrderFulfillmentUpdateTracking_orderFulfillmentUpdateTracking_order_fulfillments_lines_orderLine_variant {
   __typename: "ProductVariant";
-  product: OrderFulfillmentUpdateTracking_orderFulfillmentUpdateTracking_order_fulfillments_lines_orderLine_variant_product;
+  id: string;
   quantityAvailable: number;
 }
 
@@ -139,15 +158,9 @@ export interface OrderFulfillmentUpdateTracking_orderFulfillmentUpdateTracking_o
   warehouse: OrderFulfillmentUpdateTracking_orderFulfillmentUpdateTracking_order_fulfillments_warehouse | null;
 }
 
-export interface OrderFulfillmentUpdateTracking_orderFulfillmentUpdateTracking_order_lines_variant_product {
-  __typename: "Product";
-  isAvailableForPurchase: boolean | null;
-  isPublished: boolean;
-}
-
 export interface OrderFulfillmentUpdateTracking_orderFulfillmentUpdateTracking_order_lines_variant {
   __typename: "ProductVariant";
-  product: OrderFulfillmentUpdateTracking_orderFulfillmentUpdateTracking_order_lines_variant_product;
+  id: string;
   quantityAvailable: number;
 }
 
@@ -300,6 +313,14 @@ export interface OrderFulfillmentUpdateTracking_orderFulfillmentUpdateTracking_o
   status: JobStatusEnum;
 }
 
+export interface OrderFulfillmentUpdateTracking_orderFulfillmentUpdateTracking_order_channel {
+  __typename: "Channel";
+  isActive: boolean;
+  id: string;
+  name: string;
+  currencyCode: string;
+}
+
 export interface OrderFulfillmentUpdateTracking_orderFulfillmentUpdateTracking_order {
   __typename: "Order";
   id: string;
@@ -329,6 +350,8 @@ export interface OrderFulfillmentUpdateTracking_orderFulfillmentUpdateTracking_o
   availableShippingMethods: (OrderFulfillmentUpdateTracking_orderFulfillmentUpdateTracking_order_availableShippingMethods | null)[] | null;
   discount: OrderFulfillmentUpdateTracking_orderFulfillmentUpdateTracking_order_discount | null;
   invoices: (OrderFulfillmentUpdateTracking_orderFulfillmentUpdateTracking_order_invoices | null)[] | null;
+  channel: OrderFulfillmentUpdateTracking_orderFulfillmentUpdateTracking_order_channel;
+  isPaid: boolean | null;
 }
 
 export interface OrderFulfillmentUpdateTracking_orderFulfillmentUpdateTracking {

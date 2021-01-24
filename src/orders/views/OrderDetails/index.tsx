@@ -10,8 +10,10 @@ import useUser from "@saleor/hooks/useUser";
 import { commonMessages } from "@saleor/intl";
 import OrderCannotCancelOrderDialog from "@saleor/orders/components/OrderCannotCancelOrderDialog";
 import OrderInvoiceEmailSendDialog from "@saleor/orders/components/OrderInvoiceEmailSendDialog";
+import { useOrderConfirmMutation } from "@saleor/orders/mutations";
 import { InvoiceRequest } from "@saleor/orders/types/InvoiceRequest";
 import useCustomerSearch from "@saleor/searches/useCustomerSearch";
+import getOrderErrorMessage from "@saleor/utils/errors/order";
 import createDialogActionHandlers from "@saleor/utils/handlers/dialogActionHandlers";
 import createMetadataUpdateHandler from "@saleor/utils/handlers/metadataUpdateHandler";
 import {
@@ -23,25 +25,16 @@ import React from "react";
 import { useIntl } from "react-intl";
 
 import { customerUrl } from "../../../customers/urls";
-import {
-  getMutationState,
-  getStringOrPlaceholder,
-  maybe,
-  transformAddressToForm
-} from "../../../misc";
+import { getMutationState, getStringOrPlaceholder, maybe } from "../../../misc";
 import { productUrl } from "../../../products/urls";
 import {
   FulfillmentStatus,
   JobStatusEnum,
   OrderStatus
 } from "../../../types/globalTypes";
-import OrderAddressEditDialog from "../../components/OrderAddressEditDialog";
 import OrderCancelDialog from "../../components/OrderCancelDialog";
 import OrderDetailsPage from "../../components/OrderDetailsPage";
 import OrderDraftCancelDialog from "../../components/OrderDraftCancelDialog/OrderDraftCancelDialog";
-import OrderDraftFinalizeDialog, {
-  OrderDraftFinalizeWarning
-} from "../../components/OrderDraftFinalizeDialog";
 import OrderDraftPage from "../../components/OrderDraftPage";
 import OrderFulfillmentCancelDialog from "../../components/OrderFulfillmentCancelDialog";
 import OrderFulfillmentTrackingDialog from "../../components/OrderFulfillmentTrackingDialog";
@@ -52,45 +45,18 @@ import OrderProductAddDialog from "../../components/OrderProductAddDialog";
 import OrderShippingMethodEditDialog from "../../components/OrderShippingMethodEditDialog";
 import OrderOperations from "../../containers/OrderOperations";
 import { TypedOrderDetailsQuery, useOrderVariantSearch } from "../../queries";
-import { OrderDetails_order } from "../../types/OrderDetails";
 import {
+  orderDraftListUrl,
   orderFulfillUrl,
   orderListUrl,
+  orderRefundUrl,
+  orderReturnPath,
   orderUrl,
   OrderUrlDialog,
   OrderUrlQueryParams
 } from "../../urls";
+import OrderAddressFields from "./OrderAddressFields";
 import { OrderDetailsMessages } from "./OrderDetailsMessages";
-
-const orderDraftFinalizeWarnings = (order: OrderDetails_order) => {
-  const warnings = [] as OrderDraftFinalizeWarning[];
-  if (!(order && order.shippingAddress)) {
-    warnings.push(OrderDraftFinalizeWarning.NO_SHIPPING);
-  }
-  if (!(order && order.billingAddress)) {
-    warnings.push(OrderDraftFinalizeWarning.NO_BILLING);
-  }
-  if (!(order && (order.user || order.userEmail))) {
-    warnings.push(OrderDraftFinalizeWarning.NO_USER);
-  }
-  if (
-    order &&
-    order.lines &&
-    order.lines.filter(line => line.isShippingRequired).length > 0 &&
-    order.shippingMethod === null
-  ) {
-    warnings.push(OrderDraftFinalizeWarning.NO_SHIPPING_METHOD);
-  }
-  if (
-    order &&
-    order.lines &&
-    order.lines.filter(line => line.isShippingRequired).length === 0 &&
-    order.shippingMethod !== null
-  ) {
-    warnings.push(OrderDraftFinalizeWarning.UNNECESSARY_SHIPPING_METHOD);
-  }
-  return warnings;
-};
 
 interface OrderDetailsProps {
   id: string;
@@ -100,6 +66,7 @@ interface OrderDetailsProps {
 export const OrderDetails: React.FC<OrderDetailsProps> = ({ id, params }) => {
   const navigate = useNavigator();
   const { user } = useUser();
+
   const {
     loadMore: loadMoreCustomers,
     search: searchUsers,
@@ -107,6 +74,7 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ id, params }) => {
   } = useCustomerSearch({
     variables: DEFAULT_INITIAL_SEARCH_DATA
   });
+
   const {
     loadMore,
     search: variantSearch,
@@ -128,6 +96,7 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ id, params }) => {
     updatePrivateMetadataOpts
   ] = usePrivateMetadataUpdate({});
   const notify = useNotifier();
+  const [transactionReference, setTransactionReference] = React.useState("");
 
   const [openModal, closeModal] = createDialogActionHandlers<
     OrderUrlDialog,
@@ -136,16 +105,32 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ id, params }) => {
 
   const handleBack = () => navigate(orderListUrl());
 
+  const [orderConfirm] = useOrderConfirmMutation({
+    onCompleted: ({ orderConfirm: { errors } }) => {
+      const isError = !!errors.length;
+
+      notify({
+        status: isError ? "error" : "success",
+        text: isError
+          ? getOrderErrorMessage(errors[0], intl)
+          : "Confirmed Order"
+      });
+    }
+  });
+
   return (
     <TypedOrderDetailsQuery displayLoader variables={{ id }}>
       {({ data, loading }) => {
         const order = data?.order;
-
         if (order === null) {
           return <NotFoundPage onBack={handleBack} />;
         }
 
         const handleSubmit = async (data: MetadataFormData) => {
+          if (order?.status === OrderStatus.UNCONFIRMED) {
+            await orderConfirm({ variables: { id: order?.id } });
+          }
+
           const update = createMetadataUpdateHandler(
             order,
             () => Promise.resolve([]),
@@ -160,6 +145,8 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ id, params }) => {
               text: intl.formatMessage(commonMessages.savedChanges)
             });
           }
+
+          return result;
         };
 
         return (
@@ -171,7 +158,6 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ id, params }) => {
                 onOrderCancel={orderMessages.handleOrderCancel}
                 onOrderVoid={orderMessages.handleOrderVoid}
                 onPaymentCapture={orderMessages.handlePaymentCapture}
-                onPaymentRefund={orderMessages.handlePaymentRefund}
                 onUpdate={orderMessages.handleUpdate}
                 onDraftUpdate={orderMessages.handleDraftUpdate}
                 onShippingMethodUpdate={
@@ -214,7 +200,6 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ id, params }) => {
                   orderLineDelete,
                   orderLineUpdate,
                   orderPaymentCapture,
-                  orderPaymentRefund,
                   orderVoid,
                   orderShippingMethodUpdate,
                   orderUpdate,
@@ -243,6 +228,7 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ id, params }) => {
                           )}
                         />
                         <OrderDetailsPage
+                          onOrderReturn={() => navigate(orderReturnPath(id))}
                           disabled={
                             updateMetadataOpts.loading ||
                             updatePrivateMetadataOpts.loading
@@ -296,7 +282,7 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ id, params }) => {
                           }
                           onPaymentCapture={() => openModal("capture")}
                           onPaymentVoid={() => openModal("void")}
-                          onPaymentRefund={() => openModal("refund")}
+                          onPaymentRefund={() => navigate(orderRefundUrl(id))}
                           onProductClick={id => () => navigate(productUrl(id))}
                           onBillingAddressEdit={() =>
                             openModal("edit-billing-address")
@@ -361,10 +347,15 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ id, params }) => {
                           onClose={closeModal}
                           onConfirm={() =>
                             orderPaymentMarkAsPaid.mutate({
-                              id
+                              id,
+                              transactionReference
                             })
                           }
                           open={params.action === "mark-paid"}
+                          transactionReference={transactionReference}
+                          handleTransactionReference={({ target }) =>
+                            setTransactionReference(target.value)
+                          }
                         />
                         <OrderPaymentVoidDialog
                           confirmButtonState={orderVoid.opts.status}
@@ -381,27 +372,9 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ id, params }) => {
                           }
                           initial={order?.total.gross.amount}
                           open={params.action === "capture"}
-                          variant="capture"
                           onClose={closeModal}
                           onSubmit={variables =>
                             orderPaymentCapture.mutate({
-                              ...variables,
-                              id
-                            })
-                          }
-                        />
-                        <OrderPaymentDialog
-                          confirmButtonState={orderPaymentRefund.opts.status}
-                          errors={
-                            orderPaymentRefund.opts.data?.orderRefund.errors ||
-                            []
-                          }
-                          initial={order?.total.gross.amount}
-                          open={params.action === "refund"}
-                          variant="refund"
-                          onClose={closeModal}
-                          onSubmit={variables =>
-                            orderPaymentRefund.mutate({
                               ...variables,
                               id
                             })
@@ -512,10 +485,12 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ id, params }) => {
                               input: data
                             })
                           }
-                          onDraftFinalize={() => openModal("finalize")}
+                          onDraftFinalize={() =>
+                            orderDraftFinalize.mutate({ id })
+                          }
                           onDraftRemove={() => openModal("cancel")}
                           onOrderLineAdd={() => openModal("add-order-line")}
-                          onBack={() => navigate(orderListUrl())}
+                          onBack={() => navigate(orderDraftListUrl())}
                           order={order}
                           countries={maybe(() => data.shop.countries, []).map(
                             country => ({
@@ -560,18 +535,6 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ id, params }) => {
                           open={params.action === "cancel"}
                           orderNumber={getStringOrPlaceholder(order?.number)}
                         />
-                        <OrderDraftFinalizeDialog
-                          confirmButtonState={orderDraftFinalize.opts.status}
-                          errors={
-                            orderDraftFinalize.opts.data?.draftOrderComplete
-                              .errors || []
-                          }
-                          onClose={closeModal}
-                          onConfirm={() => orderDraftFinalize.mutate({ id })}
-                          open={params.action === "finalize"}
-                          orderNumber={getStringOrPlaceholder(order?.number)}
-                          warnings={orderDraftFinalizeWarnings(order)}
-                        />
                         <OrderShippingMethodEditDialog
                           confirmButtonState={
                             orderShippingMethodUpdate.opts.status
@@ -607,6 +570,7 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ id, params }) => {
                           products={variantSearchOpts.data?.search.edges.map(
                             edge => edge.node
                           )}
+                          selectedChannelId={order?.channel?.id}
                           onClose={closeModal}
                           onFetch={variantSearch}
                           onFetchMore={loadMore}
@@ -622,49 +586,14 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ id, params }) => {
                         />
                       </>
                     )}
-                    <OrderAddressEditDialog
-                      confirmButtonState={orderUpdate.opts.status}
-                      address={transformAddressToForm(order?.shippingAddress)}
-                      countries={
-                        data?.shop?.countries.map(country => ({
-                          code: country.code,
-                          label: country.country
-                        })) || []
-                      }
-                      errors={orderUpdate.opts.data?.orderUpdate.errors || []}
-                      open={params.action === "edit-shipping-address"}
-                      variant="shipping"
+                    <OrderAddressFields
+                      isDraft={order?.status === OrderStatus.DRAFT}
+                      orderUpdate={orderUpdate}
+                      orderDraftUpdate={orderDraftUpdate}
+                      data={data}
+                      id={id}
                       onClose={closeModal}
-                      onConfirm={shippingAddress =>
-                        orderUpdate.mutate({
-                          id,
-                          input: {
-                            shippingAddress
-                          }
-                        })
-                      }
-                    />
-                    <OrderAddressEditDialog
-                      confirmButtonState={orderUpdate.opts.status}
-                      address={transformAddressToForm(order?.billingAddress)}
-                      countries={
-                        data?.shop?.countries.map(country => ({
-                          code: country.code,
-                          label: country.country
-                        })) || []
-                      }
-                      errors={orderUpdate.opts.data?.orderUpdate.errors || []}
-                      open={params.action === "edit-billing-address"}
-                      variant="billing"
-                      onClose={closeModal}
-                      onConfirm={billingAddress =>
-                        orderUpdate.mutate({
-                          id,
-                          input: {
-                            billingAddress
-                          }
-                        })
-                      }
+                      action={params.action}
                     />
                   </>
                 )}

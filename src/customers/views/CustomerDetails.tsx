@@ -5,12 +5,19 @@ import { WindowTitle } from "@saleor/components/WindowTitle";
 import useNavigator from "@saleor/hooks/useNavigator";
 import useNotifier from "@saleor/hooks/useNotifier";
 import { commonMessages } from "@saleor/intl";
+import createMetadataUpdateHandler from "@saleor/utils/handlers/metadataUpdateHandler";
+import {
+  useMetadataUpdate,
+  usePrivateMetadataUpdate
+} from "@saleor/utils/metadata/updateMetadata";
 import React from "react";
 import { FormattedMessage, useIntl } from "react-intl";
 
 import { maybe } from "../../misc";
 import { orderListUrl, orderUrl } from "../../orders/urls";
-import CustomerDetailsPage from "../components/CustomerDetailsPage/CustomerDetailsPage";
+import CustomerDetailsPage, {
+  CustomerDetailsPageFormData
+} from "../components/CustomerDetailsPage/CustomerDetailsPage";
 import {
   TypedRemoveCustomerMutation,
   TypedUpdateCustomerMutation
@@ -76,6 +83,35 @@ export const CustomerDetailsView: React.FC<CustomerDetailsViewProps> = ({
                   return <NotFoundPage onBack={handleBack} />;
                 }
 
+                const [updateMetadata] = useMetadataUpdate({});
+                const [updatePrivateMetadata] = usePrivateMetadataUpdate({});
+
+                const updateData = async (
+                  data: CustomerDetailsPageFormData
+                ) => {
+                  const result = await updateCustomer({
+                    variables: {
+                      id,
+                      input: {
+                        email: data.email,
+                        firstName: data.firstName,
+                        isActive: data.isActive,
+                        lastName: data.lastName,
+                        note: data.note
+                      }
+                    }
+                  });
+
+                  return result.data.customerUpdate.errors;
+                };
+
+                const handleSubmit = createMetadataUpdateHandler(
+                  user,
+                  updateData,
+                  variables => updateMetadata({ variables }),
+                  variables => updatePrivateMetadata({ variables })
+                );
+
                 return (
                   <>
                     <WindowTitle
@@ -97,20 +133,7 @@ export const CustomerDetailsView: React.FC<CustomerDetailsViewProps> = ({
                       }
                       onBack={handleBack}
                       onRowClick={id => navigate(orderUrl(id))}
-                      onSubmit={formData =>
-                        updateCustomer({
-                          variables: {
-                            id,
-                            input: {
-                              email: formData.email,
-                              firstName: formData.firstName,
-                              isActive: formData.isActive,
-                              lastName: formData.lastName,
-                              note: formData.note
-                            }
-                          }
-                        })
-                      }
+                      onSubmit={handleSubmit}
                       onDelete={() =>
                         navigate(
                           customerUrl(id, {

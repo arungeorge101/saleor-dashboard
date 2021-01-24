@@ -48,35 +48,54 @@ export interface OrderMarkAsPaid_orderMarkAsPaid_order_billingAddress {
   streetAddress2: string;
 }
 
+export interface OrderMarkAsPaid_orderMarkAsPaid_order_events_relatedOrder {
+  __typename: "Order";
+  id: string;
+  number: string | null;
+}
+
 export interface OrderMarkAsPaid_orderMarkAsPaid_order_events_user {
   __typename: "User";
   id: string;
   email: string;
+  firstName: string;
+  lastName: string;
+}
+
+export interface OrderMarkAsPaid_orderMarkAsPaid_order_events_lines_orderLine {
+  __typename: "OrderLine";
+  id: string;
+  productName: string;
+  variantName: string;
+}
+
+export interface OrderMarkAsPaid_orderMarkAsPaid_order_events_lines {
+  __typename: "OrderEventOrderLineObject";
+  quantity: number | null;
+  orderLine: OrderMarkAsPaid_orderMarkAsPaid_order_events_lines_orderLine | null;
 }
 
 export interface OrderMarkAsPaid_orderMarkAsPaid_order_events {
   __typename: "OrderEvent";
   id: string;
   amount: number | null;
+  shippingCostsIncluded: boolean | null;
   date: any | null;
   email: string | null;
   emailType: OrderEventsEmailsEnum | null;
   invoiceNumber: string | null;
+  relatedOrder: OrderMarkAsPaid_orderMarkAsPaid_order_events_relatedOrder | null;
   message: string | null;
   quantity: number | null;
+  transactionReference: string | null;
   type: OrderEventsEnum | null;
   user: OrderMarkAsPaid_orderMarkAsPaid_order_events_user | null;
-}
-
-export interface OrderMarkAsPaid_orderMarkAsPaid_order_fulfillments_lines_orderLine_variant_product {
-  __typename: "Product";
-  isAvailableForPurchase: boolean | null;
-  isPublished: boolean;
+  lines: (OrderMarkAsPaid_orderMarkAsPaid_order_events_lines | null)[] | null;
 }
 
 export interface OrderMarkAsPaid_orderMarkAsPaid_order_fulfillments_lines_orderLine_variant {
   __typename: "ProductVariant";
-  product: OrderMarkAsPaid_orderMarkAsPaid_order_fulfillments_lines_orderLine_variant_product;
+  id: string;
   quantityAvailable: number;
 }
 
@@ -139,15 +158,9 @@ export interface OrderMarkAsPaid_orderMarkAsPaid_order_fulfillments {
   warehouse: OrderMarkAsPaid_orderMarkAsPaid_order_fulfillments_warehouse | null;
 }
 
-export interface OrderMarkAsPaid_orderMarkAsPaid_order_lines_variant_product {
-  __typename: "Product";
-  isAvailableForPurchase: boolean | null;
-  isPublished: boolean;
-}
-
 export interface OrderMarkAsPaid_orderMarkAsPaid_order_lines_variant {
   __typename: "ProductVariant";
-  product: OrderMarkAsPaid_orderMarkAsPaid_order_lines_variant_product;
+  id: string;
   quantityAvailable: number;
 }
 
@@ -300,6 +313,14 @@ export interface OrderMarkAsPaid_orderMarkAsPaid_order_invoices {
   status: JobStatusEnum;
 }
 
+export interface OrderMarkAsPaid_orderMarkAsPaid_order_channel {
+  __typename: "Channel";
+  isActive: boolean;
+  id: string;
+  name: string;
+  currencyCode: string;
+}
+
 export interface OrderMarkAsPaid_orderMarkAsPaid_order {
   __typename: "Order";
   id: string;
@@ -329,6 +350,8 @@ export interface OrderMarkAsPaid_orderMarkAsPaid_order {
   availableShippingMethods: (OrderMarkAsPaid_orderMarkAsPaid_order_availableShippingMethods | null)[] | null;
   discount: OrderMarkAsPaid_orderMarkAsPaid_order_discount | null;
   invoices: (OrderMarkAsPaid_orderMarkAsPaid_order_invoices | null)[] | null;
+  channel: OrderMarkAsPaid_orderMarkAsPaid_order_channel;
+  isPaid: boolean | null;
 }
 
 export interface OrderMarkAsPaid_orderMarkAsPaid {
@@ -343,4 +366,5 @@ export interface OrderMarkAsPaid {
 
 export interface OrderMarkAsPaidVariables {
   id: string;
+  transactionReference?: string | null;
 }

@@ -20,6 +20,9 @@ describe("Products", () => {
       .type("Visible test product")
       .get(PRODUCTS_SELECTORS.productTypeInput)
       .click()
+      .get(PRODUCTS_SELECTORS.autocompleteDropdown) // trying to fill autocomplete before dropdown will cause error
+      .get(PRODUCTS_SELECTORS.productTypeInput)
+      .click()
       .type("Cushion")
       .get(PRODUCTS_SELECTORS.categoryItem)
       .should("have.length", 1)
@@ -30,14 +33,15 @@ describe("Products", () => {
       .get(PRODUCTS_SELECTORS.categoryItem)
       .first()
       .click()
+      .get(PRODUCTS_SELECTORS.channelAvailabilityItem)
+      .first()
+      .click()
       .get(PRODUCTS_SELECTORS.visibleRadioBtn)
       .first()
       .click()
       .get(PRODUCTS_SELECTORS.saveBtn)
       .click()
-      .get(PRODUCTS_SELECTORS.confirmationMsg, {
-        timeout: 1000
-      })
+      .get(PRODUCTS_SELECTORS.confirmationMsg)
       .contains("Product created");
   });
 });

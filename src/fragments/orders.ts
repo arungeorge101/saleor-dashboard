@@ -7,16 +7,32 @@ export const fragmentOrderEvent = gql`
   fragment OrderEventFragment on OrderEvent {
     id
     amount
+    shippingCostsIncluded
     date
     email
     emailType
     invoiceNumber
+    relatedOrder {
+      id
+      number
+    }
     message
     quantity
+    transactionReference
     type
     user {
       id
       email
+      firstName
+      lastName
+    }
+    lines {
+      quantity
+      orderLine {
+        id
+        productName
+        variantName
+      }
     }
   }
 `;
@@ -26,10 +42,7 @@ export const fragmentOrderLine = gql`
     id
     isShippingRequired
     variant {
-      product {
-        isAvailableForPurchase
-        isPublished
-      }
+      id
       quantityAvailable
     }
     productName
@@ -51,6 +64,23 @@ export const fragmentOrderLine = gql`
     }
   }
 `;
+
+export const fragmentRefundOrderLine = gql`
+  fragment RefundOrderLineFragment on OrderLine {
+    id
+    productName
+    quantity
+    unitPrice {
+      gross {
+        ...Money
+      }
+    }
+    thumbnail(size: 64) {
+      url
+    }
+  }
+`;
+
 export const fulfillmentFragment = gql`
   ${fragmentOrderLine}
   fragment FulfillmentFragment on Fulfillment {
@@ -168,5 +198,18 @@ export const fragmentOrderDetails = gql`
     invoices {
       ...InvoiceFragment
     }
+    channel {
+      isActive
+      id
+      name
+      currencyCode
+    }
+    isPaid
+  }
+`;
+
+export const fragmentOrderSettings = gql`
+  fragment OrderSettingsFragment on OrderSettings {
+    automaticallyConfirmAllNewOrders
   }
 `;

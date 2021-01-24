@@ -44,12 +44,24 @@ const WebhookEvents: React.FC<WebhookEventsProps> = ({
       defaultMessage: "Customer created",
       description: "event"
     }),
+    [WebhookEventTypeEnum.CHECKOUT_CREATED]: intl.formatMessage({
+      defaultMessage: "Checkout created",
+      description: "event"
+    }),
+    [WebhookEventTypeEnum.CHECKOUT_UPDATED]: intl.formatMessage({
+      defaultMessage: "Checkout updated",
+      description: "event"
+    }),
     [WebhookEventTypeEnum.ORDER_CANCELLED]: intl.formatMessage({
       defaultMessage: "Order cancelled",
       description: "event"
     }),
     [WebhookEventTypeEnum.ORDER_CREATED]: intl.formatMessage({
       defaultMessage: "Order created",
+      description: "event"
+    }),
+    [WebhookEventTypeEnum.ORDER_CONFIRMED]: intl.formatMessage({
+      defaultMessage: "Order confirmed",
       description: "event"
     }),
     [WebhookEventTypeEnum.ORDER_FULFILLED]: intl.formatMessage({
@@ -66,6 +78,10 @@ const WebhookEvents: React.FC<WebhookEventsProps> = ({
     }),
     [WebhookEventTypeEnum.PRODUCT_CREATED]: intl.formatMessage({
       defaultMessage: "Product created",
+      description: "event"
+    }),
+    [WebhookEventTypeEnum.PRODUCT_UPDATED]: intl.formatMessage({
+      defaultMessage: "Product updated",
       description: "event"
     }),
     [WebhookEventTypeEnum.CHECKOUT_QUANTITY_CHANGED]: intl.formatMessage({

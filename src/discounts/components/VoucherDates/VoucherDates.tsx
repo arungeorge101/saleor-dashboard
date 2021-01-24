@@ -11,11 +11,10 @@ import getDiscountErrorMessage from "@saleor/utils/errors/discounts";
 import React from "react";
 import { useIntl } from "react-intl";
 
-import { FormData } from "../VoucherDetailsPage";
+import { VoucherDetailsPageFormData } from "../VoucherDetailsPage";
 
 interface VoucherDatesProps {
-  data: FormData;
-  defaultCurrency: string;
+  data: VoucherDetailsPageFormData;
   disabled: boolean;
   errors: DiscountErrorFragment[];
   onChange: (event: React.ChangeEvent<any>) => void;
@@ -45,7 +44,7 @@ const VoucherDates = ({
             disabled={disabled}
             error={!!formErrors.startDate}
             helperText={getDiscountErrorMessage(formErrors.startDate, intl)}
-            name={"startDate" as keyof FormData}
+            name={"startDate" as keyof VoucherDetailsPageFormData}
             onChange={onChange}
             label={intl.formatMessage(commonMessages.startDate)}
             value={data.startDate}
@@ -59,7 +58,7 @@ const VoucherDates = ({
             disabled={disabled}
             error={!!formErrors.startDate}
             helperText={getDiscountErrorMessage(formErrors.startDate, intl)}
-            name={"startTime" as keyof FormData}
+            name={"startTime" as keyof VoucherDetailsPageFormData}
             onChange={onChange}
             label={intl.formatMessage(commonMessages.startHour)}
             value={data.startTime}
@@ -76,7 +75,7 @@ const VoucherDates = ({
             defaultMessage: "Set end date",
             description: "voucher end date, switch button"
           })}
-          name={"hasEndDate" as keyof FormData}
+          name={"hasEndDate" as keyof VoucherDetailsPageFormData}
           onChange={onChange}
         />
         {data.hasEndDate && (
@@ -85,7 +84,7 @@ const VoucherDates = ({
               disabled={disabled}
               error={!!formErrors.endDate}
               helperText={getDiscountErrorMessage(formErrors.endDate, intl)}
-              name={"endDate" as keyof FormData}
+              name={"endDate" as keyof VoucherDetailsPageFormData}
               onChange={onChange}
               label={intl.formatMessage(commonMessages.endDate)}
               value={data.endDate}
@@ -99,7 +98,7 @@ const VoucherDates = ({
               disabled={disabled}
               error={!!formErrors.endDate}
               helperText={getDiscountErrorMessage(formErrors.endDate, intl)}
-              name={"endTime" as keyof FormData}
+              name={"endTime" as keyof VoucherDetailsPageFormData}
               onChange={onChange}
               label={intl.formatMessage(commonMessages.endHour)}
               value={data.endTime}

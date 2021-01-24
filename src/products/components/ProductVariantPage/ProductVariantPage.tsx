@@ -1,39 +1,57 @@
+import {
+  getAttributeValuesFromReferences,
+  mergeAttributeValues
+} from "@saleor/attributes/utils/data";
+import { ChannelPriceData } from "@saleor/channels/utils";
 import AppHeader from "@saleor/components/AppHeader";
+import AssignAttributeValueDialog from "@saleor/components/AssignAttributeValueDialog";
+import Attributes, {
+  AttributeInput,
+  VariantAttributeScope
+} from "@saleor/components/Attributes";
 import CardSpacer from "@saleor/components/CardSpacer";
 import { ConfirmButtonTransitionState } from "@saleor/components/ConfirmButton";
 import Container from "@saleor/components/Container";
-import Form from "@saleor/components/Form";
 import Grid from "@saleor/components/Grid";
 import { MetadataFormData } from "@saleor/components/Metadata";
 import Metadata from "@saleor/components/Metadata/Metadata";
 import PageHeader from "@saleor/components/PageHeader";
 import SaveButtonBar from "@saleor/components/SaveButtonBar";
+import { ProductChannelListingErrorFragment } from "@saleor/fragments/types/ProductChannelListingErrorFragment";
+import { ProductErrorWithAttributesFragment } from "@saleor/fragments/types/ProductErrorWithAttributesFragment";
 import { ProductVariant } from "@saleor/fragments/types/ProductVariant";
 import { WarehouseFragment } from "@saleor/fragments/types/WarehouseFragment";
-import useFormset, {
-  FormsetChange,
-  FormsetData
-} from "@saleor/hooks/useFormset";
 import { VariantUpdate_productVariantUpdate_errors } from "@saleor/products/types/VariantUpdate";
-import {
-  getAttributeInputFromVariant,
-  getStockInputFromVariant
-} from "@saleor/products/utils/data";
-import { mapMetadataItemToInput } from "@saleor/utils/maps";
-import useMetadataChangeTrigger from "@saleor/utils/metadata/useMetadataChangeTrigger";
-import { diff } from "fast-array-diff";
+import { SearchPages_search_edges_node } from "@saleor/searches/types/SearchPages";
+import { SearchProducts_search_edges_node } from "@saleor/searches/types/SearchProducts";
+import { FetchMoreProps, ReorderAction } from "@saleor/types";
 import React from "react";
+import { defineMessages, useIntl } from "react-intl";
 
 import { maybe } from "../../../misc";
 import ProductShipping from "../ProductShipping/ProductShipping";
 import ProductStocks, { ProductStockInput } from "../ProductStocks";
-import ProductVariantAttributes, {
-  VariantAttributeInputData
-} from "../ProductVariantAttributes";
 import ProductVariantImages from "../ProductVariantImages";
 import ProductVariantImageSelectDialog from "../ProductVariantImageSelectDialog";
 import ProductVariantNavigation from "../ProductVariantNavigation";
 import ProductVariantPrice from "../ProductVariantPrice";
+import ProductVariantSetDefault from "../ProductVariantSetDefault";
+import ProductVariantUpdateForm, {
+  ProductVariantUpdateData,
+  ProductVariantUpdateHandlers,
+  ProductVariantUpdateSubmitData
+} from "./form";
+
+const messages = defineMessages({
+  nonSelectionAttributes: {
+    defaultMessage: "Variant Attributes",
+    description: "attributes, section header"
+  },
+  selectionAttributesHeader: {
+    defaultMessage: "Variant Selection Attributes",
+    description: "attributes, section header"
+  }
+});
 
 export interface ProductVariantPageFormData extends MetadataFormData {
   costPrice: string;
@@ -45,231 +63,275 @@ export interface ProductVariantPageFormData extends MetadataFormData {
 
 export interface ProductVariantPageSubmitData
   extends ProductVariantPageFormData {
-  attributes: FormsetData<VariantAttributeInputData, string>;
+  attributes: AttributeInput[];
   addStocks: ProductStockInput[];
   updateStocks: ProductStockInput[];
   removeStocks: string[];
 }
 
 interface ProductVariantPageProps {
+  assignReferencesAttributeId?: string;
+  defaultVariantId?: string;
   defaultWeightUnit: string;
-  variant?: ProductVariant;
-  errors: VariantUpdate_productVariantUpdate_errors[];
-  saveButtonBarState: ConfirmButtonTransitionState;
+  errors:
+    | ProductErrorWithAttributesFragment[]
+    | VariantUpdate_productVariantUpdate_errors[];
+  header: string;
+  channels: ChannelPriceData[];
+  channelErrors: ProductChannelListingErrorFragment[];
   loading?: boolean;
   placeholderImage?: string;
-  header: string;
+  saveButtonBarState: ConfirmButtonTransitionState;
+  variant?: ProductVariant;
   warehouses: WarehouseFragment[];
+  referencePages?: SearchPages_search_edges_node[];
+  referenceProducts?: SearchProducts_search_edges_node[];
+  fetchMoreReferencePages?: FetchMoreProps;
+  fetchMoreReferenceProducts?: FetchMoreProps;
+  fetchReferencePages?: (data: string) => void;
+  fetchReferenceProducts?: (data: string) => void;
+  onAssignReferencesClick: (attribute: AttributeInput) => void;
+  onCloseDialog: () => void;
+  onVariantReorder: ReorderAction;
   onAdd();
   onBack();
   onDelete();
-  onSubmit(data: ProductVariantPageSubmitData);
+  onSubmit(data: ProductVariantUpdateSubmitData);
   onImageSelect(id: string);
   onVariantClick(variantId: string);
+  onSetDefaultVariant();
+  onWarehouseConfigure();
 }
 
 const ProductVariantPage: React.FC<ProductVariantPageProps> = ({
+  channels,
+  channelErrors,
+  defaultVariantId,
   defaultWeightUnit,
   errors,
-  loading,
   header,
+  loading,
   placeholderImage,
   saveButtonBarState,
   variant,
   warehouses,
+  referencePages = [],
+  referenceProducts = [],
   onAdd,
   onBack,
   onDelete,
   onImageSelect,
   onSubmit,
-  onVariantClick
+  onVariantClick,
+  onVariantReorder,
+  onSetDefaultVariant,
+  onWarehouseConfigure,
+  assignReferencesAttributeId,
+  onAssignReferencesClick,
+  fetchReferencePages,
+  fetchReferenceProducts,
+  fetchMoreReferencePages,
+  fetchMoreReferenceProducts,
+  onCloseDialog
 }) => {
-  const attributeInput = React.useMemo(
-    () => getAttributeInputFromVariant(variant),
-    [variant]
-  );
-  const stockInput = React.useMemo(() => getStockInputFromVariant(variant), [
-    variant
-  ]);
-  const { change: changeAttributeData, data: attributes } = useFormset(
-    attributeInput
-  );
-  const {
-    add: addStock,
-    change: changeStockData,
-    data: stocks,
-    remove: removeStock
-  } = useFormset(stockInput);
+  const intl = useIntl();
 
   const [isModalOpened, setModalStatus] = React.useState(false);
   const toggleModal = () => setModalStatus(!isModalOpened);
 
-  const {
-    isMetadataModified,
-    isPrivateMetadataModified,
-    makeChangeHandler: makeMetadataChangeHandler
-  } = useMetadataChangeTrigger();
-
-  const variantImages = maybe(() => variant.images.map(image => image.id), []);
-  const productImages = maybe(() =>
-    variant.product.images.sort((prev, next) =>
-      prev.sortOrder > next.sortOrder ? 1 : -1
-    )
+  const variantImages = variant?.images?.map(image => image.id);
+  const productImages = variant?.product?.images?.sort((prev, next) =>
+    prev.sortOrder > next.sortOrder ? 1 : -1
   );
-  const images = maybe(() =>
-    productImages
-      .filter(image => variantImages.indexOf(image.id) !== -1)
-      .sort((prev, next) => (prev.sortOrder > next.sortOrder ? 1 : -1))
-  );
+  const images = productImages
+    ?.filter(image => variantImages.indexOf(image.id) !== -1)
+    .sort((prev, next) => (prev.sortOrder > next.sortOrder ? 1 : -1));
 
-  const initialForm: ProductVariantPageFormData = {
-    costPrice: maybe(() => variant.costPrice.amount.toString(), ""),
-    metadata: variant?.metadata?.map(mapMetadataItemToInput),
-    price: maybe(() => variant.price.amount.toString(), ""),
-    privateMetadata: variant?.privateMetadata?.map(mapMetadataItemToInput),
-    sku: maybe(() => variant.sku, ""),
-    trackInventory: variant?.trackInventory,
-    weight: variant?.weight?.value.toString() || ""
-  };
+  const canOpenAssignReferencesAttributeDialog = !!assignReferencesAttributeId;
 
-  const handleSubmit = (data: ProductVariantPageFormData) => {
-    const dataStocks = stocks.map(stock => stock.id);
-    const variantStocks = variant.stocks.map(stock => stock.warehouse.id);
-    const stockDiff = diff(variantStocks, dataStocks);
-    const metadata = isMetadataModified ? data.metadata : undefined;
-    const privateMetadata = isPrivateMetadataModified
-      ? data.privateMetadata
-      : undefined;
-
-    onSubmit({
-      ...data,
-      addStocks: stocks.filter(stock =>
-        stockDiff.added.some(addedStock => addedStock === stock.id)
-      ),
-      attributes,
-      metadata,
-      privateMetadata,
-      removeStocks: stockDiff.removed,
-      updateStocks: stocks.filter(
-        stock => !stockDiff.added.some(addedStock => addedStock === stock.id)
+  const handleAssignReferenceAttribute = (
+    attributeValues: string[],
+    data: ProductVariantUpdateData,
+    handlers: ProductVariantUpdateHandlers
+  ) => {
+    handlers.selectAttributeReference(
+      assignReferencesAttributeId,
+      mergeAttributeValues(
+        assignReferencesAttributeId,
+        attributeValues,
+        data.attributes
       )
-    });
+    );
+    onCloseDialog();
   };
 
   return (
     <>
       <Container>
-        <AppHeader onBack={onBack}>
-          {maybe(() => variant.product.name)}
-        </AppHeader>
-        <PageHeader title={header} />
-        <Form initial={initialForm} onSubmit={handleSubmit} confirmLeave>
-          {({ change, data, hasChanged, submit, triggerChange }) => {
-            const handleAttributeChange: FormsetChange = (id, value) => {
-              changeAttributeData(id, value);
-              triggerChange();
-            };
-
-            const changeMetadata = makeMetadataChangeHandler(change);
-
-            return (
-              <>
-                <Grid variant="inverted">
-                  <div>
-                    <ProductVariantNavigation
-                      current={variant ? variant.id : undefined}
-                      fallbackThumbnail={maybe(
-                        () => variant.product.thumbnail.url
-                      )}
-                      variants={maybe(() => variant.product.variants)}
-                      onAdd={onAdd}
-                      onRowClick={(variantId: string) => {
-                        if (variant) {
-                          return onVariantClick(variantId);
-                        }
-                      }}
-                    />
-                  </div>
-                  <div>
-                    <ProductVariantAttributes
-                      attributes={attributes}
-                      disabled={loading}
-                      errors={errors}
-                      onChange={handleAttributeChange}
-                    />
-                    <CardSpacer />
-                    <ProductVariantImages
-                      disabled={loading}
-                      images={images}
-                      placeholderImage={placeholderImage}
-                      onImageAdd={toggleModal}
-                    />
-                    <CardSpacer />
-                    <ProductVariantPrice
-                      errors={errors}
-                      price={data.price}
-                      currencySymbol={
-                        variant && variant.price
-                          ? variant.price.currency
-                          : variant && variant.costPrice
-                          ? variant.costPrice.currency
-                          : ""
+        <AppHeader onBack={onBack}>{variant?.product?.name}</AppHeader>
+        <PageHeader title={header}>
+          {variant?.product?.defaultVariant?.id !== variant?.id && (
+            <ProductVariantSetDefault
+              onSetDefaultVariant={onSetDefaultVariant}
+            />
+          )}
+        </PageHeader>
+        <ProductVariantUpdateForm
+          variant={variant}
+          onSubmit={onSubmit}
+          warehouses={warehouses}
+          currentChannels={channels}
+          referencePages={referencePages}
+          referenceProducts={referenceProducts}
+          fetchReferencePages={fetchReferencePages}
+          fetchMoreReferencePages={fetchMoreReferencePages}
+          fetchReferenceProducts={fetchReferenceProducts}
+          fetchMoreReferenceProducts={fetchMoreReferenceProducts}
+          assignReferencesAttributeId={assignReferencesAttributeId}
+        >
+          {({
+            change,
+            data,
+            disabled: formDisabled,
+            handlers,
+            hasChanged,
+            submit
+          }) => (
+            <>
+              <Grid variant="inverted">
+                <div>
+                  <ProductVariantNavigation
+                    current={variant ? variant.id : undefined}
+                    defaultVariantId={defaultVariantId}
+                    fallbackThumbnail={maybe(
+                      () => variant.product.thumbnail.url
+                    )}
+                    variants={maybe(() => variant.product.variants)}
+                    onAdd={onAdd}
+                    onRowClick={(variantId: string) => {
+                      if (variant) {
+                        return onVariantClick(variantId);
                       }
-                      costPrice={data.costPrice}
-                      loading={loading}
-                      onChange={change}
-                    />
-                    <CardSpacer />
-                    <ProductShipping
-                      data={data}
-                      disabled={loading}
-                      errors={errors}
-                      weightUnit={variant?.weight?.unit || defaultWeightUnit}
-                      onChange={change}
-                    />
-                    <CardSpacer />
-                    <ProductStocks
-                      data={data}
-                      disabled={loading}
-                      errors={errors}
-                      stocks={stocks}
-                      warehouses={warehouses}
-                      onChange={(id, value) => {
-                        triggerChange();
-                        changeStockData(id, value);
-                      }}
-                      onFormDataChange={change}
-                      onWarehouseStockAdd={id => {
-                        triggerChange();
-                        addStock({
-                          data: null,
-                          id,
-                          label: warehouses.find(
-                            warehouse => warehouse.id === id
-                          ).name,
-                          value: "0"
-                        });
-                      }}
-                      onWarehouseStockDelete={id => {
-                        triggerChange();
-                        removeStock(id);
-                      }}
-                    />
-                    <CardSpacer />
-                    <Metadata data={data} onChange={changeMetadata} />
-                  </div>
-                </Grid>
-                <SaveButtonBar
-                  disabled={loading || !hasChanged}
-                  state={saveButtonBarState}
-                  onCancel={onBack}
-                  onDelete={onDelete}
-                  onSave={submit}
+                    }}
+                    onReorder={onVariantReorder}
+                  />
+                </div>
+                <div>
+                  <Attributes
+                    title={intl.formatMessage(messages.nonSelectionAttributes)}
+                    attributes={data.attributes.filter(
+                      attribute =>
+                        attribute.data.variantAttributeScope ===
+                        VariantAttributeScope.NOT_VARIANT_SELECTION
+                    )}
+                    loading={loading}
+                    disabled={loading}
+                    errors={errors}
+                    onChange={handlers.selectAttribute}
+                    onMultiChange={handlers.selectAttributeMultiple}
+                    onFileChange={handlers.selectAttributeFile}
+                    onReferencesRemove={handlers.selectAttributeReference}
+                    onReferencesAddClick={onAssignReferencesClick}
+                    onReferencesReorder={handlers.reorderAttributeValue}
+                  />
+                  <CardSpacer />
+                  <Attributes
+                    title={intl.formatMessage(
+                      messages.selectionAttributesHeader
+                    )}
+                    attributes={data.attributes.filter(
+                      attribute =>
+                        attribute.data.variantAttributeScope ===
+                        VariantAttributeScope.VARIANT_SELECTION
+                    )}
+                    loading={loading}
+                    disabled={loading}
+                    errors={errors}
+                    onChange={handlers.selectAttribute}
+                    onMultiChange={handlers.selectAttributeMultiple}
+                    onFileChange={handlers.selectAttributeFile}
+                    onReferencesRemove={handlers.selectAttributeReference}
+                    onReferencesAddClick={onAssignReferencesClick}
+                    onReferencesReorder={handlers.reorderAttributeValue}
+                  />
+                  <CardSpacer />
+                  <ProductVariantImages
+                    disabled={loading}
+                    images={images}
+                    placeholderImage={placeholderImage}
+                    onImageAdd={toggleModal}
+                  />
+                  <CardSpacer />
+                  <ProductVariantPrice
+                    ProductVariantChannelListings={data.channelListings.map(
+                      channel => ({
+                        ...channel.data,
+                        ...channel.value
+                      })
+                    )}
+                    errors={channelErrors}
+                    loading={loading}
+                    onChange={handlers.changeChannels}
+                  />
+                  <CardSpacer />
+                  <ProductShipping
+                    data={data}
+                    disabled={loading}
+                    errors={errors}
+                    weightUnit={variant?.weight?.unit || defaultWeightUnit}
+                    onChange={change}
+                  />
+                  <CardSpacer />
+                  <ProductStocks
+                    data={data}
+                    disabled={loading}
+                    hasVariants={true}
+                    errors={errors}
+                    stocks={data.stocks}
+                    warehouses={warehouses}
+                    onChange={handlers.changeStock}
+                    onFormDataChange={change}
+                    onWarehouseStockAdd={handlers.addStock}
+                    onWarehouseStockDelete={handlers.deleteStock}
+                    onWarehouseConfigure={onWarehouseConfigure}
+                  />
+                  <CardSpacer />
+                  <Metadata data={data} onChange={handlers.changeMetadata} />
+                </div>
+              </Grid>
+              <SaveButtonBar
+                disabled={loading || formDisabled || !hasChanged}
+                state={saveButtonBarState}
+                onCancel={onBack}
+                onDelete={onDelete}
+                onSave={submit}
+              />
+              {canOpenAssignReferencesAttributeDialog && (
+                <AssignAttributeValueDialog
+                  attributeValues={getAttributeValuesFromReferences(
+                    assignReferencesAttributeId,
+                    data.attributes,
+                    referencePages,
+                    referenceProducts
+                  )}
+                  hasMore={handlers.fetchMoreReferences?.hasMore}
+                  open={canOpenAssignReferencesAttributeDialog}
+                  onFetch={handlers.fetchReferences}
+                  onFetchMore={handlers.fetchMoreReferences?.onFetchMore}
+                  loading={handlers.fetchMoreReferences?.loading}
+                  onClose={onCloseDialog}
+                  onSubmit={attributeValues =>
+                    handleAssignReferenceAttribute(
+                      attributeValues,
+                      data,
+                      handlers
+                    )
+                  }
                 />
-              </>
-            );
-          }}
-        </Form>
+              )}
+            </>
+          )}
+        </ProductVariantUpdateForm>
       </Container>
       {variant && (
         <ProductVariantImageSelectDialog

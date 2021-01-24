@@ -2,7 +2,9 @@ import {
   bulkProductErrorFragment,
   bulkStockErrorFragment,
   exportErrorFragment,
+  productChannelListingErrorFragment,
   productErrorFragment,
+  productErrorWithAttributesFragment,
   stockErrorFragment
 } from "@saleor/fragments/errors";
 import {
@@ -18,9 +20,9 @@ import {
   productBulkDeleteVariables
 } from "./types/productBulkDelete";
 import {
-  productBulkPublish,
-  productBulkPublishVariables
-} from "./types/productBulkPublish";
+  ProductChannelListingUpdate,
+  ProductChannelListingUpdateVariables
+} from "./types/ProductChannelListingUpdate";
 import { ProductCreate, ProductCreateVariables } from "./types/ProductCreate";
 import { ProductDelete, ProductDeleteVariables } from "./types/ProductDelete";
 import { ProductExport, ProductExportVariables } from "./types/ProductExport";
@@ -40,10 +42,6 @@ import {
   ProductImageUpdate,
   ProductImageUpdateVariables
 } from "./types/ProductImageUpdate";
-import {
-  ProductSetAvailabilityForPurchase,
-  ProductSetAvailabilityForPurchaseVariables
-} from "./types/ProductSetAvailabilityForPurchase";
 import { ProductUpdate, ProductUpdateVariables } from "./types/ProductUpdate";
 import {
   ProductVariantBulkCreate,
@@ -53,6 +51,18 @@ import {
   ProductVariantBulkDelete,
   ProductVariantBulkDeleteVariables
 } from "./types/ProductVariantBulkDelete";
+import {
+  ProductVariantChannelListingUpdate,
+  ProductVariantChannelListingUpdateVariables
+} from "./types/ProductVariantChannelListingUpdate";
+import {
+  ProductVariantReorder,
+  ProductVariantReorderVariables
+} from "./types/ProductVariantReorder";
+import {
+  ProductVariantSetDefault,
+  ProductVariantSetDefaultVariables
+} from "./types/ProductVariantSetDefault";
 import {
   SimpleProductUpdate,
   SimpleProductUpdateVariables
@@ -130,41 +140,33 @@ export const useProductImagesReorder = makeMutation<
   ProductImageReorderVariables
 >(productImagesReorder);
 
-export const productUpdateMutation = gql`
+const productVariantSetDefault = gql`
   ${productErrorFragment}
   ${productFragmentDetails}
-  mutation ProductUpdate(
-    $id: ID!
-    $attributes: [AttributeValueInput]
-    $publicationDate: Date
-    $category: ID
-    $chargeTaxes: Boolean!
-    $collections: [ID]
-    $descriptionJson: JSONString
-    $isPublished: Boolean!
-    $name: String
-    $basePrice: PositiveDecimal
-    $seo: SeoInput
-    $visibleInListings: Boolean
-  ) {
-    productUpdate(
-      id: $id
-      input: {
-        attributes: $attributes
-        publicationDate: $publicationDate
-        category: $category
-        chargeTaxes: $chargeTaxes
-        collections: $collections
-        descriptionJson: $descriptionJson
-        isPublished: $isPublished
-        name: $name
-        basePrice: $basePrice
-        seo: $seo
-        visibleInListings: $visibleInListings
-      }
-    ) {
+  mutation ProductVariantSetDefault($productId: ID!, $variantId: ID!) {
+    productVariantSetDefault(productId: $productId, variantId: $variantId) {
       errors: productErrors {
         ...ProductErrorFragment
+      }
+      product {
+        ...Product
+      }
+    }
+  }
+`;
+
+export const useProductVariantSetDefaultMutation = makeMutation<
+  ProductVariantSetDefault,
+  ProductVariantSetDefaultVariables
+>(productVariantSetDefault);
+
+export const productUpdateMutation = gql`
+  ${productErrorWithAttributesFragment}
+  ${productFragmentDetails}
+  mutation ProductUpdate($id: ID!, $input: ProductInput!) {
+    productUpdate(id: $id, input: $input) {
+      errors: productErrors {
+        ...ProductErrorWithAttributesFragment
       }
       product {
         ...Product
@@ -179,49 +181,22 @@ export const useProductUpdateMutation = makeMutation<
 
 export const simpleProductUpdateMutation = gql`
   ${bulkStockErrorFragment}
-  ${productErrorFragment}
+  ${productErrorWithAttributesFragment}
   ${productFragmentDetails}
   ${stockErrorFragment}
   ${fragmentVariant}
   mutation SimpleProductUpdate(
     $id: ID!
-    $attributes: [AttributeValueInput]
-    $publicationDate: Date
-    $category: ID
-    $chargeTaxes: Boolean!
-    $collections: [ID]
-    $descriptionJson: JSONString
-    $isPublished: Boolean!
-    $name: String
-    $basePrice: PositiveDecimal
+    $input: ProductInput!
     $productVariantId: ID!
     $productVariantInput: ProductVariantInput!
-    $seo: SeoInput
     $addStocks: [StockInput!]!
     $deleteStocks: [ID!]!
     $updateStocks: [StockInput!]!
-    $weight: WeightScalar
-    $visibleInListings: Boolean
   ) {
-    productUpdate(
-      id: $id
-      input: {
-        attributes: $attributes
-        publicationDate: $publicationDate
-        category: $category
-        chargeTaxes: $chargeTaxes
-        collections: $collections
-        descriptionJson: $descriptionJson
-        isPublished: $isPublished
-        name: $name
-        basePrice: $basePrice
-        seo: $seo
-        weight: $weight
-        visibleInListings: $visibleInListings
-      }
-    ) {
+    productUpdate(id: $id, input: $input) {
       errors: productErrors {
-        ...ProductErrorFragment
+        ...ProductErrorWithAttributesFragment
       }
       product {
         ...Product
@@ -229,7 +204,7 @@ export const simpleProductUpdateMutation = gql`
     }
     productVariantUpdate(id: $productVariantId, input: $productVariantInput) {
       errors: productErrors {
-        ...ProductErrorFragment
+        ...ProductErrorWithAttributesFragment
       }
       productVariant {
         ...ProductVariant
@@ -276,48 +251,12 @@ export const useSimpleProductUpdateMutation = makeMutation<
 >(simpleProductUpdateMutation);
 
 export const productCreateMutation = gql`
-  ${productErrorFragment}
+  ${productErrorWithAttributesFragment}
   ${productFragmentDetails}
-  mutation ProductCreate(
-    $attributes: [AttributeValueInput]
-    $publicationDate: Date
-    $category: ID!
-    $chargeTaxes: Boolean!
-    $collections: [ID]
-    $descriptionJson: JSONString
-    $isPublished: Boolean!
-    $name: String!
-    $basePrice: PositiveDecimal
-    $productType: ID!
-    $sku: String
-    $seo: SeoInput
-    $stocks: [StockInput!]!
-    $trackInventory: Boolean!
-    $weight: WeightScalar
-    $visibleInListings: Boolean
-  ) {
-    productCreate(
-      input: {
-        attributes: $attributes
-        publicationDate: $publicationDate
-        category: $category
-        chargeTaxes: $chargeTaxes
-        collections: $collections
-        descriptionJson: $descriptionJson
-        isPublished: $isPublished
-        name: $name
-        basePrice: $basePrice
-        productType: $productType
-        sku: $sku
-        seo: $seo
-        stocks: $stocks
-        trackInventory: $trackInventory
-        weight: $weight
-        visibleInListings: $visibleInListings
-      }
-    ) {
+  mutation ProductCreate($input: ProductCreateInput!) {
+    productCreate(input: $input) {
       errors: productErrors {
-        ...ProductErrorFragment
+        ...ProductErrorWithAttributesFragment
       }
       product {
         ...Product
@@ -351,14 +290,12 @@ export const useVariantDeleteMutation = makeMutation<
 export const variantUpdateMutation = gql`
   ${bulkStockErrorFragment}
   ${fragmentVariant}
-  ${productErrorFragment}
+  ${productErrorWithAttributesFragment}
   mutation VariantUpdate(
     $addStocks: [StockInput!]!
     $removeStocks: [ID!]!
     $id: ID!
     $attributes: [AttributeValueInput]
-    $costPrice: PositiveDecimal
-    $price: PositiveDecimal
     $sku: String
     $trackInventory: Boolean!
     $stocks: [StockInput!]!
@@ -368,15 +305,13 @@ export const variantUpdateMutation = gql`
       id: $id
       input: {
         attributes: $attributes
-        costPrice: $costPrice
-        price: $price
         sku: $sku
         trackInventory: $trackInventory
         weight: $weight
       }
     ) {
       errors: productErrors {
-        ...ProductErrorFragment
+        ...ProductErrorWithAttributesFragment
       }
       productVariant {
         ...ProductVariant
@@ -422,11 +357,11 @@ export const useVariantUpdateMutation = makeMutation<
 
 export const variantCreateMutation = gql`
   ${fragmentVariant}
-  ${productErrorFragment}
+  ${productErrorWithAttributesFragment}
   mutation VariantCreate($input: ProductVariantCreateInput!) {
     productVariantCreate(input: $input) {
       errors: productErrors {
-        ...ProductErrorFragment
+        ...ProductErrorWithAttributesFragment
       }
       productVariant {
         ...ProductVariant
@@ -532,21 +467,6 @@ export const useProductBulkDeleteMutation = makeMutation<
   productBulkDeleteVariables
 >(productBulkDeleteMutation);
 
-export const productBulkPublishMutation = gql`
-  ${productErrorFragment}
-  mutation productBulkPublish($ids: [ID!]!, $isPublished: Boolean!) {
-    productBulkPublish(ids: $ids, isPublished: $isPublished) {
-      errors: productErrors {
-        ...ProductErrorFragment
-      }
-    }
-  }
-`;
-export const useProductBulkPublishMutation = makeMutation<
-  productBulkPublish,
-  productBulkPublishVariables
->(productBulkPublishMutation);
-
 export const ProductVariantBulkCreateMutation = gql`
   ${bulkProductErrorFragment}
   mutation ProductVariantBulkCreate(
@@ -599,32 +519,66 @@ export const useProductExport = makeMutation<
   ProductExportVariables
 >(productExportMutation);
 
-const productSetAvailabilityForPurchase = gql`
-  ${productErrorFragment}
-  mutation ProductSetAvailabilityForPurchase(
-    $isAvailable: Boolean!
-    $productId: ID!
-    $startDate: Date
+export const ProductChannelListingUpdateMutation = gql`
+  ${productFragmentDetails}
+  ${productChannelListingErrorFragment}
+  mutation ProductChannelListingUpdate(
+    $id: ID!
+    $input: ProductChannelListingUpdateInput!
   ) {
-    productSetAvailabilityForPurchase(
-      isAvailable: $isAvailable
-      productId: $productId
-      startDate: $startDate
-    ) {
+    productChannelListingUpdate(id: $id, input: $input) {
       product {
-        id
-        availableForPurchase
-        isAvailableForPurchase
+        ...Product
       }
-      errors: productErrors {
-        ...ProductErrorFragment
-        message
+      errors: productChannelListingErrors {
+        ...ProductChannelListingErrorFragment
       }
     }
   }
 `;
 
-export const useProductSetAvailabilityForPurchase = makeMutation<
-  ProductSetAvailabilityForPurchase,
-  ProductSetAvailabilityForPurchaseVariables
->(productSetAvailabilityForPurchase);
+const productVariantReorder = gql`
+  ${productErrorFragment}
+  ${productFragmentDetails}
+  mutation ProductVariantReorder($move: ReorderInput!, $productId: ID!) {
+    productVariantReorder(moves: [$move], productId: $productId) {
+      errors: productErrors {
+        ...ProductErrorFragment
+      }
+      product {
+        ...Product
+      }
+    }
+  }
+`;
+export const useProductVariantReorderMutation = makeMutation<
+  ProductVariantReorder,
+  ProductVariantReorderVariables
+>(productVariantReorder);
+export const useProductChannelListingUpdate = makeMutation<
+  ProductChannelListingUpdate,
+  ProductChannelListingUpdateVariables
+>(ProductChannelListingUpdateMutation);
+
+export const ProductVariantChannelListingUpdateMutation = gql`
+  ${fragmentVariant}
+  ${productChannelListingErrorFragment}
+  mutation ProductVariantChannelListingUpdate(
+    $id: ID!
+    $input: [ProductVariantChannelListingAddInput!]!
+  ) {
+    productVariantChannelListingUpdate(id: $id, input: $input) {
+      variant {
+        ...ProductVariant
+      }
+      errors: productChannelListingErrors {
+        ...ProductChannelListingErrorFragment
+      }
+    }
+  }
+`;
+
+export const useProductVariantChannelListingUpdate = makeMutation<
+  ProductVariantChannelListingUpdate,
+  ProductVariantChannelListingUpdateVariables
+>(ProductVariantChannelListingUpdateMutation);

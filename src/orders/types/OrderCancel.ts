@@ -48,35 +48,54 @@ export interface OrderCancel_orderCancel_order_billingAddress {
   streetAddress2: string;
 }
 
+export interface OrderCancel_orderCancel_order_events_relatedOrder {
+  __typename: "Order";
+  id: string;
+  number: string | null;
+}
+
 export interface OrderCancel_orderCancel_order_events_user {
   __typename: "User";
   id: string;
   email: string;
+  firstName: string;
+  lastName: string;
+}
+
+export interface OrderCancel_orderCancel_order_events_lines_orderLine {
+  __typename: "OrderLine";
+  id: string;
+  productName: string;
+  variantName: string;
+}
+
+export interface OrderCancel_orderCancel_order_events_lines {
+  __typename: "OrderEventOrderLineObject";
+  quantity: number | null;
+  orderLine: OrderCancel_orderCancel_order_events_lines_orderLine | null;
 }
 
 export interface OrderCancel_orderCancel_order_events {
   __typename: "OrderEvent";
   id: string;
   amount: number | null;
+  shippingCostsIncluded: boolean | null;
   date: any | null;
   email: string | null;
   emailType: OrderEventsEmailsEnum | null;
   invoiceNumber: string | null;
+  relatedOrder: OrderCancel_orderCancel_order_events_relatedOrder | null;
   message: string | null;
   quantity: number | null;
+  transactionReference: string | null;
   type: OrderEventsEnum | null;
   user: OrderCancel_orderCancel_order_events_user | null;
-}
-
-export interface OrderCancel_orderCancel_order_fulfillments_lines_orderLine_variant_product {
-  __typename: "Product";
-  isAvailableForPurchase: boolean | null;
-  isPublished: boolean;
+  lines: (OrderCancel_orderCancel_order_events_lines | null)[] | null;
 }
 
 export interface OrderCancel_orderCancel_order_fulfillments_lines_orderLine_variant {
   __typename: "ProductVariant";
-  product: OrderCancel_orderCancel_order_fulfillments_lines_orderLine_variant_product;
+  id: string;
   quantityAvailable: number;
 }
 
@@ -139,15 +158,9 @@ export interface OrderCancel_orderCancel_order_fulfillments {
   warehouse: OrderCancel_orderCancel_order_fulfillments_warehouse | null;
 }
 
-export interface OrderCancel_orderCancel_order_lines_variant_product {
-  __typename: "Product";
-  isAvailableForPurchase: boolean | null;
-  isPublished: boolean;
-}
-
 export interface OrderCancel_orderCancel_order_lines_variant {
   __typename: "ProductVariant";
-  product: OrderCancel_orderCancel_order_lines_variant_product;
+  id: string;
   quantityAvailable: number;
 }
 
@@ -300,6 +313,14 @@ export interface OrderCancel_orderCancel_order_invoices {
   status: JobStatusEnum;
 }
 
+export interface OrderCancel_orderCancel_order_channel {
+  __typename: "Channel";
+  isActive: boolean;
+  id: string;
+  name: string;
+  currencyCode: string;
+}
+
 export interface OrderCancel_orderCancel_order {
   __typename: "Order";
   id: string;
@@ -329,6 +350,8 @@ export interface OrderCancel_orderCancel_order {
   availableShippingMethods: (OrderCancel_orderCancel_order_availableShippingMethods | null)[] | null;
   discount: OrderCancel_orderCancel_order_discount | null;
   invoices: (OrderCancel_orderCancel_order_invoices | null)[] | null;
+  channel: OrderCancel_orderCancel_order_channel;
+  isPaid: boolean | null;
 }
 
 export interface OrderCancel_orderCancel {

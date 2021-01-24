@@ -48,35 +48,54 @@ export interface OrderCapture_orderCapture_order_billingAddress {
   streetAddress2: string;
 }
 
+export interface OrderCapture_orderCapture_order_events_relatedOrder {
+  __typename: "Order";
+  id: string;
+  number: string | null;
+}
+
 export interface OrderCapture_orderCapture_order_events_user {
   __typename: "User";
   id: string;
   email: string;
+  firstName: string;
+  lastName: string;
+}
+
+export interface OrderCapture_orderCapture_order_events_lines_orderLine {
+  __typename: "OrderLine";
+  id: string;
+  productName: string;
+  variantName: string;
+}
+
+export interface OrderCapture_orderCapture_order_events_lines {
+  __typename: "OrderEventOrderLineObject";
+  quantity: number | null;
+  orderLine: OrderCapture_orderCapture_order_events_lines_orderLine | null;
 }
 
 export interface OrderCapture_orderCapture_order_events {
   __typename: "OrderEvent";
   id: string;
   amount: number | null;
+  shippingCostsIncluded: boolean | null;
   date: any | null;
   email: string | null;
   emailType: OrderEventsEmailsEnum | null;
   invoiceNumber: string | null;
+  relatedOrder: OrderCapture_orderCapture_order_events_relatedOrder | null;
   message: string | null;
   quantity: number | null;
+  transactionReference: string | null;
   type: OrderEventsEnum | null;
   user: OrderCapture_orderCapture_order_events_user | null;
-}
-
-export interface OrderCapture_orderCapture_order_fulfillments_lines_orderLine_variant_product {
-  __typename: "Product";
-  isAvailableForPurchase: boolean | null;
-  isPublished: boolean;
+  lines: (OrderCapture_orderCapture_order_events_lines | null)[] | null;
 }
 
 export interface OrderCapture_orderCapture_order_fulfillments_lines_orderLine_variant {
   __typename: "ProductVariant";
-  product: OrderCapture_orderCapture_order_fulfillments_lines_orderLine_variant_product;
+  id: string;
   quantityAvailable: number;
 }
 
@@ -139,15 +158,9 @@ export interface OrderCapture_orderCapture_order_fulfillments {
   warehouse: OrderCapture_orderCapture_order_fulfillments_warehouse | null;
 }
 
-export interface OrderCapture_orderCapture_order_lines_variant_product {
-  __typename: "Product";
-  isAvailableForPurchase: boolean | null;
-  isPublished: boolean;
-}
-
 export interface OrderCapture_orderCapture_order_lines_variant {
   __typename: "ProductVariant";
-  product: OrderCapture_orderCapture_order_lines_variant_product;
+  id: string;
   quantityAvailable: number;
 }
 
@@ -300,6 +313,14 @@ export interface OrderCapture_orderCapture_order_invoices {
   status: JobStatusEnum;
 }
 
+export interface OrderCapture_orderCapture_order_channel {
+  __typename: "Channel";
+  isActive: boolean;
+  id: string;
+  name: string;
+  currencyCode: string;
+}
+
 export interface OrderCapture_orderCapture_order {
   __typename: "Order";
   id: string;
@@ -329,6 +350,8 @@ export interface OrderCapture_orderCapture_order {
   availableShippingMethods: (OrderCapture_orderCapture_order_availableShippingMethods | null)[] | null;
   discount: OrderCapture_orderCapture_order_discount | null;
   invoices: (OrderCapture_orderCapture_order_invoices | null)[] | null;
+  channel: OrderCapture_orderCapture_order_channel;
+  isPaid: boolean | null;
 }
 
 export interface OrderCapture_orderCapture {
